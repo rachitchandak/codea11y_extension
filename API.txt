@@ -1,0 +1,4 @@
+const API_KEY = "BMnLqzun2vpeAAxx4P95sKJND31hGejLauqID6pwgWqWONZNxNcQJQQJ99BIACYeBjFXJ3w3AAABACOG3jDa";
+const RESOURCE = "ots-openai"; // your Azure resource name
+const DEPLOYMENT = "gpt-4o"; // the deployment name you set in Azure
+const API_VERSION = "2024-08-01-preview";

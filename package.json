@@ -1,0 +1,86 @@
+{
+  "name": "codea11y",
+  "displayName": "Codea11y – AI WCAG Compliance Checker",
+  "description": "AI-powered WCAG accessibility auditing for your codebase",
+  "version": "0.1.0",
+  "publisher": "codea11y",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Linters",
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codea11y-sidebar",
+          "title": "Codea11y",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "codea11y-sidebar": [
+        {
+          "type": "webview",
+          "id": "codea11y.chatView",
+          "name": "Chat"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "codea11y.openReport",
+        "title": "Codea11y: Open Audit Report"
+      },
+      {
+        "command": "codea11y.startAudit",
+        "title": "Codea11y: Start Accessibility Audit"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run build",
+    "build:server": "tsc -p server/tsconfig.json",
+    "build:extension": "webpack --mode production",
+    "build": "npm run build:server && npm run build:extension",
+    "watch:server": "tsc -p server/tsconfig.json --watch",
+    "watch:extension": "webpack --mode development --watch --progress",
+    "watch": "npm run build:server && npm run watch:extension",
+    "lint": "eslint src --ext .ts,.tsx"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.8",
+    "@types/cors": "^2.8.17",
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.11.0",
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@types/vscode": "^1.85.0",
+    "@types/vscode-webview": "^1.57.4",
+    "css-loader": "^6.9.1",
+    "mini-css-extract-plugin": "^2.7.7",
+    "postcss": "^8.4.33",
+    "postcss-loader": "^8.0.0",
+    "style-loader": "^3.3.4",
+    "tailwindcss": "^3.4.1",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.3.3",
+    "webpack": "^5.90.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@vscode/codicons": "^0.0.45",
+    "@vscode/webview-ui-toolkit": "^1.4.0",
+    "better-sqlite3": "^11.0.0",
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "openai": "^4.73.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  }
+}

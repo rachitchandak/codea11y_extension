@@ -1,0 +1,42 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      // ── Main: launch the extension in a new Extension Development Host ──
+      "name": "Run Extension",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "preLaunchTask": "npm: watch",
+      "sourceMaps": true,
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/dist/**",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      // ── Production build then launch (no file-watching) ──────────────
+      "name": "Run Extension (Production Build)",
+      "type": "extensionHost",
+      "request": "launch",
+      "args": ["--extensionDevelopmentPath=${workspaceFolder}"],
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "preLaunchTask": "npm: build",
+      "sourceMaps": true,
+      "resolveSourceMapLocations": [
+        "${workspaceFolder}/dist/**",
+        "!**/node_modules/**"
+      ]
+    },
+    {
+      // ── Attach to an already-running Extension Development Host ──────
+      "name": "Attach to Extension Host",
+      "type": "node",
+      "request": "attach",
+      "port": 6009,
+      "outFiles": ["${workspaceFolder}/dist/**/*.js"],
+      "sourceMaps": true
+    }
+  ]
+}

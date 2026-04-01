@@ -1,0 +1,80 @@
+@import "@vscode/codicons/dist/codicon.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── VS Code theme-aware base resets ─────────────────────────────── */
+:root {
+  color-scheme: light dark;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--vscode-editor-background);
+  color: var(--vscode-editor-foreground);
+  font-family: var(--vscode-font-family);
+  font-size: var(--vscode-font-size);
+  line-height: 1.4;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+/* ── Scrollbar styling to match VS Code ──────────────────────────── */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--vscode-scrollbarSlider-background);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--vscode-scrollbarSlider-hoverBackground);
+}
+
+/* ── Utility: theme-aware badge pills ────────────────────────────── */
+.badge-error {
+  background-color: var(--vscode-errorForeground);
+  color: var(--vscode-editor-background);
+}
+.badge-warning {
+  background-color: var(--vscode-editorWarning-foreground);
+  color: var(--vscode-editor-background);
+}
+.badge-info {
+  background-color: var(--vscode-editorInfo-foreground);
+  color: var(--vscode-editor-background);
+}
+
+/* ── Code snippet block ──────────────────────────────────────────── */
+.code-snippet {
+  background-color: var(--vscode-textCodeBlock-background);
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-family: var(--vscode-editor-font-family);
+  font-size: var(--vscode-editor-font-size);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ── Collapsible animation (pure CSS backup for Tailwind keyframes) */
+.collapsible-content {
+  overflow: hidden;
+  transition: max-height 250ms ease-out, opacity 250ms ease-out;
+}
+.collapsible-content[data-state="closed"] {
+  max-height: 0;
+  opacity: 0;
+}
+.collapsible-content[data-state="open"] {
+  max-height: 300px;
+  opacity: 1;
+}

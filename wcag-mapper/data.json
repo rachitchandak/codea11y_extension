@@ -1,0 +1,1730 @@
+{
+  "Summary": [],
+  "Images": [
+    {
+      "sc_id": "WCAG 2.0 1.1.1 Non-text Content",
+      "guideline": "1.1.1 -\nNon-text Content",
+      "level": "A",
+      "description": "Non-text Content in Images focuses on whether alt attribute is present for the img, img element that is used contains an empty alt attribute. (Warning), and for the presence of alt attribute indicating the input [type = \"image\"] function.",
+      "checks": [
+        {
+          "test_criteria": "Short text alternative for Informative Images",
+          "rule": "Check if alt attribute is present for the img.",
+          "description": "What to check: Check if alt attribute is present for the img. Compliant when alt attribute is present for the img. Non-compliant when this check applies and the code does not show that alt attribute is present for the img."
+        },
+        {
+          "test_criteria": "Decorative images to be ignored by assistive technology",
+          "rule": "Check that img element that is used contains an empty alt attribute. (Warning)",
+          "description": "What to check: Check that img element that is used contains an empty alt attribute. (Warning). Compliant when img element that is used contains an empty alt attribute. (Warning). Non-compliant when this check applies and the code does not show that img element that is used contains an empty alt attribute. (Warning)."
+        },
+        {
+          "test_criteria": "Provision for Text alternative techniques for controls and input",
+          "rule": "Check for the presence of  alt attribute indicating the input [type = \"image\"] function .",
+           "description": "What to check: Check whether the input [type = \"image\"] has an alt attribute that identifies its function. Compliant when the input [type = \"image\"] has an alt attribute that identifies its function. Non-compliant when this check applies and the code does not show that the input [type = \"image\"] has an alt attribute that identifies its function."
+        },
+        {
+          "test_criteria": "Links having text and iconic representation adjacent to each other",
+          "rule": "Check that if the links that have both textual and iconic represenatation adjaent to each other they should be included in the same <a> element",
+          "description": "What to check: Check that if the links that have both textual and iconic represenatation adjaent to each other they should be included in the same <a> element. Compliant when the links that have both textual and iconic represenatation adjaent to each other they should be included in the same <a> element. Non-compliant when this check applies and the code does not show that the links that have both textual and iconic represenatation adjaent to each other they should be included in the same <a> element."
+        },
+        {
+          "test_criteria": "if `img` is child of an `<a>` element",
+          "rule": "Check if anchor text is present ,the <img> element contained within the <a> element has a null value set for its alt attribute or a value that supplements the link text and describes the image.",
+          "description": "What to check: Check if anchor text is present ,the <img> element contained within the <a> element has a null value set for its alt attribute or a value that supplements the link text and describes the image. Compliant when anchor text is present ,the <img> element contained within the <a> element has a null value set for its alt attribute or a value that supplements the link text and describes the image. Non-compliant when this check applies and the code does not show that anchor text is present ,the <img> element contained within the <a> element has a null value set for its alt attribute or a value that supplements the link text and describes the image."
+        },
+        {
+          "test_criteria": "Long text alternative for non-text content e.g. a chart or diagram",
+          "rule": "check that the img element have charts or diagrams have a longdesc attribute pointing the location having the long description of the non-text content.",
+          "description": "What to check: check that the img element have charts or diagrams have a longdesc attribute pointing the location having the long description of the non-text content. Compliant when the img element have charts or diagrams have a longdesc attribute pointing the location having the long description of the non-text content. Non-compliant when this check applies and the code does not show that the img element have charts or diagrams have a longdesc attribute pointing the location having the long description of the non-text content."
+        },
+        {
+          "test_criteria": "selected element is an `img` element and has adjacent siblings of type `img`",
+          "rule": "Check when the group of images are used to convey the information one item in the group includes a text alternative that serves the equivalent purpose for the entire group.",
+          "description": "What to check: Check when the group of images are used to convey the information one item in the group includes a text alternative that serves the equivalent purpose for the entire group. Compliant when the group of images are used to convey the information one item in the group includes a text alternative that serves the equivalent purpose for the entire group. Non-compliant when this check applies and the code does not show that the group of images are used to convey the information one item in the group includes a text alternative that serves the equivalent purpose for the entire group."
+        },
+        {
+          "test_criteria": "CSS background decorative",
+          "rule": "Check that the CSS background-images are used for solely decorative purposes and does not convey important information.",
+          "description": "What to check: Check that the CSS background-images are used for solely decorative purposes and does not convey important information. Compliant when the CSS background-images are used for solely decorative purposes and does not convey important information. Non-compliant when this check applies and the code does not show that the CSS background-images are used for solely decorative purposes and does not convey important information."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.4.5 Images of Text",
+      "guideline": "1.4.5 Images of Text",
+      "level": "AA",
+      "description": "Images of Text in Images focuses on whether images of text are not used where HTML and CSS can present the same information and any remaining images of text are only decorative, essential, or part of a logotype.",
+      "checks": [
+        {
+          "test_criteria": "Real text is used when styling can achieve the result",
+          "rule": "Verify images of text are not used where HTML and CSS can present the same information.",
+          "description": "What to check: Verify images of text are not used where HTML and CSS can present the same information. Compliant when images of text are not used where HTML and CSS can present the same information. Non-compliant when this check applies and the code does not show that images of text are not used where HTML and CSS can present the same information."
+        },
+        {
+          "test_criteria": "Exceptions are limited to essential cases",
+          "rule": "Check that any remaining images of text are only decorative, essential, or part of a logotype.",
+          "description": "What to check: Check that any remaining images of text are only decorative, essential, or part of a logotype. Compliant when any remaining images of text are only decorative, essential, or part of a logotype. Non-compliant when this check applies and the code does not show that any remaining images of text are only decorative, essential, or part of a logotype."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.4.3 Contrast (Minimum)",
+      "guideline": "1.4.3 Contrast (Minimum)",
+      "level": "AA",
+      "description": "Contrast (Minimum) in Images focuses on whether normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background and text embedded in images meets the same contrast requirements unless an exception applies.",
+      "checks": [
+        {
+          "test_criteria": "Text contrast meets minimum ratio",
+          "rule": "Verify normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background.",
+          "description": "What to check: Verify normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background. Compliant when normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background. Non-compliant when this check applies and the code does not show that normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background."
+        },
+        {
+          "test_criteria": "Images of text also meet contrast",
+          "rule": "Check that text embedded in images meets the same contrast requirements unless an exception applies.",
+          "description": "What to check: Check that text embedded in images meets the same contrast requirements unless an exception applies. Compliant when text embedded in images meets the same contrast requirements unless an exception applies. Non-compliant when this check applies and the code does not show that text embedded in images meets the same contrast requirements unless an exception applies."
+        }
+      ]
+    }
+  ],
+  "Forms": [
+    {
+      "sc_id": "WCAG 2.0 1.1.1 Non-text Content",
+      "guideline": "1.1.1 Non Text Content",
+      "level": "A",
+      "description": "Non-text Content in Forms focuses on whether there is a <label> element that identifies the purpose of the control before the input, textarea, the form control has multiple labels or the single label for multiple form controls aria-lablelledby can be used to convey the purpose of the form control, and the form controls which doesn’t have visible label should have a <title> attribute.",
+      "checks": [
+        {
+          "test_criteria": "Explicit Form labels",
+          "rule": "Check that there is a <label> element that identifies the purpose of the control before the input, textarea",
+          "description": "What to check: Check that there is a <label> element that identifies the purpose of the control before the input, textarea. Compliant when there is a <label> element that identifies the purpose of the control before the input, textarea. Non-compliant when this check applies and the code does not show that there is a <label> element that identifies the purpose of the control before the input, textarea."
+        },
+        {
+          "test_criteria": "Advanced Form Labelling\nMultiple Labels",
+          "rule": "Check that if the form control has multiple labels or the single label for multiple form controls aria-lablelledby can be used to convey the purpose of the form control",
+          "description": "What to check: Check that if the form control has multiple labels or the single label for multiple form controls aria-lablelledby can be used to convey the purpose of the form control. Compliant when the form control has multiple labels or the single label for multiple form controls aria-lablelledby can be used to convey the purpose of the form control. Non-compliant when this check applies and the code does not show that the form control has multiple labels or the single label for multiple form controls aria-lablelledby can be used to convey the purpose of the form control."
+        },
+        {
+          "test_criteria": "Title (Invisible /hidden labels)",
+          "rule": "Check that the form controls which doesn’t have visible label should have a <title> attribute",
+          "description": "What to check: Check that the form controls which doesn’t have visible label should have a <title> attribute. Compliant when the form controls which doesn’t have visible label should have a <title> attribute. Non-compliant when this check applies and the code does not show that the form controls which doesn’t have visible label should have a <title> attribute."
+        },
+        {
+          "test_criteria": "Explicit Form labels",
+          "rule": "Check that there is a <label> element that identifies the purpose of the control after the input.",
+          "description": "What to check: Check that there is a <label> element that identifies the purpose of the control after the input. Compliant when there is a <label> element that identifies the purpose of the control after the input. Non-compliant when this check applies and the code does not show that there is a <label> element that identifies the purpose of the control after the input."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.3.1 Info and Relationships",
+      "guideline": "1.3.1 Info and Relationships",
+      "level": "A",
+      "description": "Info and Relationships in Forms focuses on whether for the group of logically related input or select elements are contained within <fieldset> elements and has a <legend> element that includes a description for that group and there is a <label> element that identifies the purpose of the control before the select.",
+      "checks": [
+        {
+          "test_criteria": "Grouping Controls",
+          "rule": "Check that for the group of logically related input or select elements are contained within <fieldset> elements and has a <legend> element that includes a description for that group.",
+          "description": "What to check: Check that for the group of logically related input or select elements are contained within <fieldset> elements and has a <legend> element that includes a description for that group. Compliant when for the group of logically related input or select elements are contained within <fieldset> elements and has a <legend> element that includes a description for that group. Non-compliant when this check applies and the code does not show that for the group of logically related input or select elements are contained within <fieldset> elements and has a <legend> element that includes a description for that group."
+        },
+        {
+          "test_criteria": "Explicit Form labels",
+          "rule": "Check that there is a <label> element that identifies the purpose of the control before the select",
+          "description": "What to check: Check that there is a <label> element that identifies the purpose of the control before the select. Compliant when there is a <label> element that identifies the purpose of the control before the select. Non-compliant when this check applies and the code does not show that there is a <label> element that identifies the purpose of the control before the select."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 2.4.6 Headings and Labels",
+      "guideline": "2.4.6 Heading and Labels",
+      "level": "AA",
+      "description": "Headings and Labels in Forms focuses on whether headings and form labels accurately describe the section, field, or control they identify and visible names such as button text, dialog titles, and section headings are specific enough to support scanning.",
+      "checks": [
+        {
+          "test_criteria": "Headings and labels describe purpose",
+          "rule": "Verify headings and form labels accurately describe the section, field, or control they identify.",
+          "description": "What to check: Verify headings and form labels accurately describe the section, field, or control they identify. Compliant when headings and form labels accurately describe the section, field, or control they identify. Non-compliant when this check applies and the code does not show that headings and form labels accurately describe the section, field, or control they identify."
+        },
+        {
+          "test_criteria": "Generic labels are avoided",
+          "rule": "Check that visible names such as button text, dialog titles, and section headings are specific enough to support scanning.",
+          "description": "What to check: Check that visible names such as button text, dialog titles, and section headings are specific enough to support scanning. Compliant when visible names such as button text, dialog titles, and section headings are specific enough to support scanning. Non-compliant when this check applies and the code does not show that visible names such as button text, dialog titles, and section headings are specific enough to support scanning."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 3.3.1 Error Identification",
+      "guideline": "WCAG 2.0: 3.3.1\nError identification",
+      "level": "A",
+      "description": "Error Identification in Forms focuses on whether each detected input error identifies the field in error and describes the problem in text and error text, aria-describedby, summaries, and states point users to the relevant control.",
+      "checks": [
+        {
+          "test_criteria": "Errors are identified in text",
+          "rule": "Verify each detected input error identifies the field in error and describes the problem in text.",
+          "description": "What to check: Verify each detected input error identifies the field in error and describes the problem in text. Compliant when each detected input error identifies the field in error and describes the problem in text. Non-compliant when this check applies and the code does not show that each detected input error identifies the field in error and describes the problem in text."
+        },
+        {
+          "test_criteria": "Error indication is programmatically associated",
+          "rule": "Check that error text, aria-describedby, summaries, and states point users to the relevant control.",
+          "description": "What to check: Check that error text, aria-describedby, summaries, and states point users to the relevant control. Compliant when error text, aria-describedby, summaries, and states point users to the relevant control. Non-compliant when this check applies and the code does not show that error text, aria-describedby, summaries, and states point users to the relevant control."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 3.3.2 Labels or Instructions",
+      "guideline": "3.3.2 Labels or instructions",
+      "level": "A",
+      "description": "Labels or Instructions in Forms focuses on whether each field, option set, and control has a clear label, instruction, or example before the user must provide input and required fields, input formats, units, date patterns, and special entry rules are described in text, not implied only by placeholder or styling.",
+      "checks": [
+        {
+          "test_criteria": "Labels or instructions are provided before input is required",
+          "rule": "Verify each field, option set, and control has a clear label, instruction, or example before the user must provide input.",
+          "description": "What to check: Verify each field, option set, and control has a clear label, instruction, or example before the user must provide input. Compliant when each field, option set, and control has a clear label, instruction, or example before the user must provide input. Non-compliant when this check applies and the code does not show that each field, option set, and control has a clear label, instruction, or example before the user must provide input."
+        },
+        {
+          "test_criteria": "Required format and constraints are stated explicitly",
+          "rule": "Check that required fields, input formats, units, date patterns, and special entry rules are described in text, not implied only by placeholder or styling.",
+          "description": "What to check: Check that required fields, input formats, units, date patterns, and special entry rules are described in text, not implied only by placeholder or styling. Compliant when required fields, input formats, units, date patterns, and special entry rules are described in text, not implied only by placeholder or styling. Non-compliant when this check applies and the code does not show that required fields, input formats, units, date patterns, and special entry rules are described in text, not implied only by placeholder or styling."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 3.3.3 Error Suggestion",
+      "guideline": "WCAG 2.0: 3.3.3\nError Suggestion",
+      "level": "AA",
+      "description": "Error Suggestion in Forms focuses on whether error messages provide suggested fixes when the correction is known and safe to disclose and users are told the expected format, range, or correction instead of only being told that something is invalid.",
+      "checks": [
+        {
+          "test_criteria": "Known corrections are suggested",
+          "rule": "Verify error messages provide suggested fixes when the correction is known and safe to disclose.",
+          "description": "What to check: Verify error messages provide suggested fixes when the correction is known and safe to disclose. Compliant when error messages provide suggested fixes when the correction is known and safe to disclose. Non-compliant when this check applies and the code does not show that error messages provide suggested fixes when the correction is known and safe to disclose."
+        },
+        {
+          "test_criteria": "Suggestions are specific and actionable",
+          "rule": "Check that users are told the expected format, range, or correction instead of only being told that something is invalid.",
+          "description": "What to check: Check that users are told the expected format, range, or correction instead of only being told that something is invalid. Compliant when users are told the expected format, range, or correction instead of only being told that something is invalid. Non-compliant when this check applies and the code does not show that users are told the expected format, range, or correction instead of only being told that something is invalid."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 3.3.4 Error Prevention (Legal, Financial, Data)",
+      "guideline": "WCAG 2.0: 3.3.4\nError Preventions",
+      "level": "AA",
+      "description": "Error Prevention (Legal, Financial, Data) in Forms focuses on whether legal, financial, test, or data-changing submissions provide a chance to review, correct, confirm, or reverse the action and the confirmation or review step clearly presents the data that will be committed before final submission.",
+      "checks": [
+        {
+          "test_criteria": "Critical submissions are reversible, checked, or confirmed",
+          "rule": "Verify legal, financial, test, or data-changing submissions provide a chance to review, correct, confirm, or reverse the action.",
+          "description": "What to check: Verify legal, financial, test, or data-changing submissions provide a chance to review, correct, confirm, or reverse the action. Compliant when legal, financial, test, or data-changing submissions provide a chance to review, correct, confirm, or reverse the action. Non-compliant when this check applies and the code does not show that legal, financial, test, or data-changing submissions provide a chance to review, correct, confirm, or reverse the action."
+        },
+        {
+          "test_criteria": "Review step exposes important values",
+          "rule": "Check that the confirmation or review step clearly presents the data that will be committed before final submission.",
+          "description": "What to check: Check that the confirmation or review step clearly presents the data that will be committed before final submission. Compliant when the confirmation or review step clearly presents the data that will be committed before final submission. Non-compliant when this check applies and the code does not show that the confirmation or review step clearly presents the data that will be committed before final submission."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 4.1.2 Name, Role, Value",
+      "guideline": "4.1.2 Name Role Value",
+      "level": "A",
+      "description": "Name, Role, Value in Forms focuses on whether each custom widget exposes an appropriate role and an accessible name, expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes, and scripted components support standard keyboard interaction and notify assistive technology when properties change.",
+      "checks": [
+        {
+          "test_criteria": "Name and role are programmatically exposed",
+          "rule": "Verify each custom widget exposes an appropriate role and an accessible name.",
+          "description": "What to check: Verify each custom widget exposes an appropriate role and an accessible name. Compliant when each custom widget exposes an appropriate role and an accessible name. Non-compliant when this check applies and the code does not show that each custom widget exposes an appropriate role and an accessible name."
+        },
+        {
+          "test_criteria": "States and values are kept in sync",
+          "rule": "Check that expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes.",
+          "description": "What to check: Check that expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes. Compliant when expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes. Non-compliant when this check applies and the code does not show that expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes."
+        },
+        {
+          "test_criteria": "Users can operate custom controls with assistive tech",
+          "rule": "Ensure scripted components support standard keyboard interaction and notify assistive technology when properties change.",
+          "description": "What to check: Ensure scripted components support standard keyboard interaction and notify assistive technology when properties change. Compliant when scripted components support standard keyboard interaction and notify assistive technology when properties change. Non-compliant when this check applies and the code does not show that scripted components support standard keyboard interaction and notify assistive technology when properties change."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 1.3.5 Identify Input Purpose",
+      "guideline": "WCAG 2.1: 1.3.5 Identify Input Purpose 1.3 Adaptable",
+      "level": "AA",
+      "description": "Identify Input Purpose in Forms focuses on whether fields collecting personal data use valid autocomplete tokens such as name, email, tel, street-address, or postal-code and the programmed input purpose accurately matches the visible label and expected data.",
+      "checks": [
+        {
+          "test_criteria": "User-input fields expose purpose programmatically",
+          "rule": "Verify fields collecting personal data use valid autocomplete tokens such as name, email, tel, street-address, or postal-code.",
+          "description": "What to check: Verify fields collecting personal data use valid autocomplete tokens such as name, email, tel, street-address, or postal-code. Compliant when fields collecting personal data use valid autocomplete tokens such as name, email, tel, street-address, or postal-code. Non-compliant when this check applies and the code does not show that fields collecting personal data use valid autocomplete tokens such as name, email, tel, street-address, or postal-code."
+        },
+        {
+          "test_criteria": "Autocomplete tokens match the field meaning",
+          "rule": "Check that the programmed input purpose accurately matches the visible label and expected data.",
+          "description": "What to check: Check that the programmed input purpose accurately matches the visible label and expected data. Compliant when the programmed input purpose accurately matches the visible label and expected data. Non-compliant when this check applies and the code does not show that the programmed input purpose accurately matches the visible label and expected data."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 2.5.3 Label in Name",
+      "guideline": "WCAG 2.1: 2.5.3 Label in Name 2.5 Input Modalities",
+      "level": "A",
+      "description": "Label in Name in Forms focuses on whether the programmatic name of buttons, links, and custom controls includes the same text shown visually and speech users can activate controls using the words they see on screen, ideally at the start of the accessible name.",
+      "checks": [
+        {
+          "test_criteria": "Accessible name contains the visible label",
+          "rule": "Verify the programmatic name of buttons, links, and custom controls includes the same text shown visually.",
+          "description": "What to check: Verify the programmatic name of buttons, links, and custom controls includes the same text shown visually. Compliant when the programmatic name of buttons, links, and custom controls includes the same text shown visually. Non-compliant when this check applies and the code does not show that the programmatic name of buttons, links, and custom controls includes the same text shown visually."
+        },
+        {
+          "test_criteria": "Visible label words stay in the same order",
+          "rule": "Check that speech users can activate controls using the words they see on screen, ideally at the start of the accessible name.",
+          "description": "What to check: Check that speech users can activate controls using the words they see on screen, ideally at the start of the accessible name. Compliant when speech users can activate controls using the words they see on screen, ideally at the start of the accessible name. Non-compliant when this check applies and the code does not show that speech users can activate controls using the words they see on screen, ideally at the start of the accessible name."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.2 3.3.7 Redundant Entry",
+      "guideline": "WCAG 2.2: 3.3.7 Redundant Entry 3.3 Input Assistance",
+      "level": "A",
+      "description": "Redundant Entry in Forms focuses on whether users are not required to re-enter information already entered earlier in the same process unless an exception applies and known values are prefilled or available through selection, copy-forward, or same-as options.",
+      "checks": [
+        {
+          "test_criteria": "Previously provided information is reused",
+          "rule": "Verify users are not required to re-enter information already entered earlier in the same process unless an exception applies.",
+          "description": "What to check: Verify users are not required to re-enter information already entered earlier in the same process unless an exception applies. Compliant when users are not required to re-enter information already entered earlier in the same process unless an exception applies. Non-compliant when this check applies and the code does not show that users are not required to re-enter information already entered earlier in the same process unless an exception applies."
+        },
+        {
+          "test_criteria": "Refill or selection mechanisms are offered",
+          "rule": "Check that known values are prefilled or available through selection, copy-forward, or same-as options.",
+          "description": "What to check: Check that known values are prefilled or available through selection, copy-forward, or same-as options. Compliant when known values are prefilled or available through selection, copy-forward, or same-as options. Non-compliant when this check applies and the code does not show that known values are prefilled or available through selection, copy-forward, or same-as options."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.2 3.3.8 Accessible Authentication (Minimum)",
+      "guideline": "WCAG 2.2: 3.3.8 Accessible Authentication (Minimum) 3.3 Input Assistance",
+      "level": "AA",
+      "description": "Accessible Authentication (Minimum) in Forms focuses on whether login does not rely only on memorization, transcription, puzzle solving, or similar cognitive tests unless an allowed exception applies and password managers, magic links, copy-paste, passkeys, or equivalent support users who cannot complete the cognitive test.",
+      "checks": [
+        {
+          "test_criteria": "Authentication avoids cognitive function tests when possible",
+          "rule": "Verify login does not rely only on memorization, transcription, puzzle solving, or similar cognitive tests unless an allowed exception applies.",
+          "description": "What to check: Verify login does not rely only on memorization, transcription, puzzle solving, or similar cognitive tests unless an allowed exception applies. Compliant when login does not rely only on memorization, transcription, puzzle solving, or similar cognitive tests unless an allowed exception applies. Non-compliant when this check applies and the code does not show that login does not rely only on memorization, transcription, puzzle solving, or similar cognitive tests unless an allowed exception applies."
+        },
+        {
+          "test_criteria": "An accessible alternative is available",
+          "rule": "Check that password managers, magic links, copy-paste, passkeys, or equivalent support users who cannot complete the cognitive test.",
+          "description": "What to check: Check that password managers, magic links, copy-paste, passkeys, or equivalent support users who cannot complete the cognitive test. Compliant when password managers, magic links, copy-paste, passkeys, or equivalent support users who cannot complete the cognitive test. Non-compliant when this check applies and the code does not show that password managers, magic links, copy-paste, passkeys, or equivalent support users who cannot complete the cognitive test."
+        }
+      ]
+    }
+  ],
+  "Status Messages": [
+    {
+      "sc_id": "WCAG 2.1 4.1.3 Status Messages",
+      "guideline": "WCAG 2.1: 4.1.3 Status Messages 4.1 Compatible",
+      "level": "AA",
+      "description": "Status Messages in Status Messages focuses on whether success, error, progress, and validation updates use role status, alert, log, or aria-live so assistive technologies announce them and status messages do not require focus movement and that the live region contains only the information users need.",
+      "checks": [
+        {
+          "test_criteria": "Status messages are announced without moving focus",
+          "rule": "Verify success, error, progress, and validation updates use role status, alert, log, or aria-live so assistive technologies announce them.",
+          "description": "What to check: Verify success, error, progress, and validation updates use role status, alert, log, or aria-live so assistive technologies announce them. Compliant when success, error, progress, and validation updates use role status, alert, log, or aria-live so assistive technologies announce them. Non-compliant when this check applies and the code does not show that success, error, progress, and validation updates use role status, alert, log, or aria-live so assistive technologies announce them."
+        },
+        {
+          "test_criteria": "Announcements are timely and relevant",
+          "rule": "Check that status messages do not require focus movement and that the live region contains only the information users need.",
+          "description": "What to check: Check that status messages do not require focus movement and that the live region contains only the information users need. Compliant when status messages do not require focus movement and that the live region contains only the information users need. Non-compliant when this check applies and the code does not show that status messages do not require focus movement and that the live region contains only the information users need."
+        }
+      ]
+    }
+  ],
+  "Keyboard": [
+    {
+      "sc_id": "WCAG 2.0 2.1.1 Keyboard",
+      "guideline": "WCAG 2.0: 2.1.1 : Keyboard",
+      "level": "A",
+      "description": "Keyboard in Keyboard focuses on whether every control, link, menu, dialog, and custom widget can be operated with a keyboard interface and drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent. Treat this category as applicable for any page, layout, or component file that contains operable links or other focusable UI, including repeated header links, footer links, skip links, menus, breadcrumbs, and other shared site navigation.",
+      "checks": [
+        {
+          "test_criteria": "All functionality works from the keyboard",
+          "rule": "Verify every control, link, menu, dialog, and custom widget can be operated with a keyboard interface.",
+          "description": "What to check: Verify every control, link, menu, dialog, and custom widget can be operated with a keyboard interface. Compliant when every control, link, menu, dialog, and custom widget can be operated with a keyboard interface. Non-compliant when this check applies and the code does not show that every control, link, menu, dialog, and custom widget can be operated with a keyboard interface."
+        },
+        {
+          "test_criteria": "No pointer-only interaction is required",
+          "rule": "Check that drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent.",
+          "description": "What to check: Check that drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent. Compliant when drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent. Non-compliant when this check applies and the code does not show that drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 4.1.2 Name, Role, Value",
+      "guideline": "WCAG 2.0 4.1.2 Name ,State ,Role",
+      "level": "A",
+      "description": "Name, Role, Value in Keyboard focuses on whether each custom widget exposes an appropriate role and an accessible name, expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes, and scripted components support standard keyboard interaction and notify assistive technology when properties change.",
+      "checks": [
+        {
+          "test_criteria": "Name and role are programmatically exposed",
+          "rule": "Verify each custom widget exposes an appropriate role and an accessible name.",
+          "description": "What to check: Verify each custom widget exposes an appropriate role and an accessible name. Compliant when each custom widget exposes an appropriate role and an accessible name. Non-compliant when this check applies and the code does not show that each custom widget exposes an appropriate role and an accessible name."
+        },
+        {
+          "test_criteria": "States and values are kept in sync",
+          "rule": "Check that expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes.",
+          "description": "What to check: Check that expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes. Compliant when expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes. Non-compliant when this check applies and the code does not show that expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes."
+        },
+        {
+          "test_criteria": "Users can operate custom controls with assistive tech",
+          "rule": "Ensure scripted components support standard keyboard interaction and notify assistive technology when properties change.",
+          "description": "What to check: Ensure scripted components support standard keyboard interaction and notify assistive technology when properties change. Compliant when scripted components support standard keyboard interaction and notify assistive technology when properties change. Non-compliant when this check applies and the code does not show that scripted components support standard keyboard interaction and notify assistive technology when properties change."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 2.1.2 No Keyboard Trap",
+      "guideline": "WCAG 2.0: 2.1.2 : No Keyboard Trap",
+      "level": "A",
+      "description": "No Keyboard Trap in Keyboard focuses on whether focus can always be moved away from widgets, dialogs, editors, embedded content, and repeated navigation links using the keyboard alone and if a component needs keys other than standard Tab, Shift+Tab, or arrows to exit, provide clear instructions to the user. This applies to shared navigation in headers, footers, menus, and other site chrome, not only custom widgets.",
+      "checks": [
+        {
+          "test_criteria": "Keyboard users can exit every component",
+          "rule": "Verify focus can always be moved away from widgets, dialogs, editors, and embedded content using the keyboard alone.",
+          "description": "What to check: Verify focus can always be moved away from widgets, dialogs, editors, and embedded content using the keyboard alone. Compliant when focus can always be moved away from widgets, dialogs, editors, and embedded content using the keyboard alone. Non-compliant when this check applies and the code does not show that focus can always be moved away from widgets, dialogs, editors, and embedded content using the keyboard alone."
+        },
+        {
+          "test_criteria": "Any special exit method is explained",
+          "rule": "If a component needs keys other than standard Tab, Shift+Tab, or arrows to exit, provide clear instructions to the user.",
+          "description": "What to check: If a component needs keys other than standard Tab, Shift+Tab, or arrows to exit, provide clear instructions to the user. Compliant when a component needs keys other than standard Tab, Shift+Tab, or arrows to exit, provide clear instructions to the user. Non-compliant when this check applies and the code does not show that a component needs keys other than standard Tab, Shift+Tab, or arrows to exit, provide clear instructions to the user."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 2.4.3 Focus Order",
+      "guideline": "WCAG 2.0 2.4.3 (Focus Order)",
+      "level": "A",
+      "description": "Focus Order in Keyboard focuses on whether focus moves through interactive elements in an order that matches the intended reading and interaction sequence and positive tabindex, scripted focus jumps, and dynamic UI do not create a confusing or broken focus order. This includes sequential keyboard movement through header links, footer links, menus, breadcrumbs, skip links, and other repeated navigation patterns wherever they appear.",
+      "checks": [
+        {
+          "test_criteria": "Tab order preserves meaning and operation",
+          "rule": "Verify focus moves through interactive elements in an order that matches the intended reading and interaction sequence.",
+          "description": "What to check: Verify focus moves through interactive elements in an order that matches the intended reading and interaction sequence. Compliant when focus moves through interactive elements in an order that matches the intended reading and interaction sequence. Non-compliant when this check applies and the code does not show that focus moves through interactive elements in an order that matches the intended reading and interaction sequence."
+        },
+        {
+          "test_criteria": "DOM order and focus management agree",
+          "rule": "Check that positive tabindex, scripted focus jumps, and dynamic UI do not create a confusing or broken focus order.",
+          "description": "What to check: Check that positive tabindex, scripted focus jumps, and dynamic UI do not create a confusing or broken focus order. Compliant when positive tabindex, scripted focus jumps, and dynamic UI do not create a confusing or broken focus order. Non-compliant when this check applies and the code does not show that positive tabindex, scripted focus jumps, and dynamic UI do not create a confusing or broken focus order."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 2.4.7 Focus Visible",
+      "guideline": "WCAG 2.0:  2.4.7 : Focus Visible",
+      "level": "AA",
+      "description": "Focus Visible in Keyboard focuses on whether every keyboard-operable component has a visible focus indicator when focused and CSS or scripts do not remove outlines or otherwise hide the focused state without an adequate replacement. This includes links and controls in shared navigation such as headers, footers, menus, skip links, and breadcrumbs.",
+      "checks": [
+        {
+          "test_criteria": "Keyboard focus is visibly indicated",
+          "rule": "Verify every keyboard-operable component has a visible focus indicator when focused.",
+          "description": "What to check: Verify every keyboard-operable component has a visible focus indicator when focused. Compliant when every keyboard-operable component has a visible focus indicator when focused. Non-compliant when this check applies and the code does not show that every keyboard-operable component has a visible focus indicator when focused."
+        },
+        {
+          "test_criteria": "Focus styling is not suppressed",
+          "rule": "Check that CSS or scripts do not remove outlines or otherwise hide the focused state without an adequate replacement.",
+            "description": "What to check: Check that CSS or scripts do not remove outlines or otherwise hide the focused state without an adequate replacement. Compliant when CSS or scripts do not remove outlines or otherwise hide the focused state without an adequate replacement. Non-compliant when this check applies and the code does not show that CSS or scripts do not remove outlines or otherwise hide the focused state without an adequate replacement."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 3.2.1 On Focus",
+      "guideline": "WCAG 2.0: 3.2.1 : On Focus",
+      "level": "A",
+      "description": "On Focus in Keyboard focuses on whether moving focus to a control does not automatically submit, navigate, open a new window, or dramatically change the page and widgets may reveal information on focus but do not commit an action just because focus arrived.",
+      "checks": [
+        {
+          "test_criteria": "Focus does not trigger a context change",
+          "rule": "Verify moving focus to a control does not automatically submit, navigate, open a new window, or dramatically change the page.",
+          "description": "What to check: Verify moving focus to a control does not automatically submit, navigate, open a new window, or dramatically change the page. Compliant when moving focus to a control does not automatically submit, navigate, open a new window, or dramatically change the page. Non-compliant when this check applies and the code does not show that moving focus to a control does not automatically submit, navigate, open a new window, or dramatically change the page."
+        },
+        {
+          "test_criteria": "Focus-only events are safe",
+          "rule": "Check that widgets may reveal information on focus but do not commit an action just because focus arrived.",
+          "description": "What to check: Check that widgets may reveal information on focus but do not commit an action just because focus arrived. Compliant when widgets may reveal information on focus but do not commit an action just because focus arrived. Non-compliant when this check applies and the code does not show that widgets may reveal information on focus but do not commit an action just because focus arrived."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 3.2.2 On Input",
+      "guideline": "WCAG 2.0: 3.2.2 : On Input",
+      "level": "A",
+      "description": "On Input in Keyboard focuses on whether selecting an option, checking a box, or editing a field does not auto-submit or navigate unless users were warned first and significant context changes happen on a separate button or are clearly explained before users interact.",
+      "checks": [
+        {
+          "test_criteria": "Changing a control does not unexpectedly change context",
+          "rule": "Verify selecting an option, checking a box, or editing a field does not auto-submit or navigate unless users were warned first.",
+          "description": "What to check: Verify selecting an option, checking a box, or editing a field does not auto-submit or navigate unless users were warned first. Compliant when selecting an option, checking a box, or editing a field does not auto-submit or navigate unless users were warned first. Non-compliant when this check applies and the code does not show that selecting an option, checking a box, or editing a field does not auto-submit or navigate unless users were warned first."
+        },
+        {
+          "test_criteria": "Advance actions are explicit or announced",
+          "rule": "Check that significant context changes happen on a separate button or are clearly explained before users interact.",
+          "description": "What to check: Check that significant context changes happen on a separate button or are clearly explained before users interact. Compliant when significant context changes happen on a separate button or are clearly explained before users interact. Non-compliant when this check applies and the code does not show that significant context changes happen on a separate button or are clearly explained before users interact."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 1.4.13 Content on Hover or Focus",
+      "guideline": "WCAG 2.1: 1.4.13 Content on Hover or Focus 1.4 Distinguishable",
+      "level": "AA",
+      "description": "Content on Hover or Focus in Keyboard focuses on whether tooltips, popovers, and flyouts can be dismissed without moving pointer hover or keyboard focus unless dismissal is not needed, additional content remains visible while the trigger is hovered or focused and does not disappear when moving onto it, and hover or focus content is positioned so users can perceive both the trigger and the revealed content.",
+      "checks": [
+        {
+          "test_criteria": "Hover or focus content can be dismissed",
+          "rule": "Verify tooltips, popovers, and flyouts can be dismissed without moving pointer hover or keyboard focus unless dismissal is not needed.",
+          "description": "What to check: Verify tooltips, popovers, and flyouts can be dismissed without moving pointer hover or keyboard focus unless dismissal is not needed. Compliant when tooltips, popovers, and flyouts can be dismissed without moving pointer hover or keyboard focus unless dismissal is not needed. Non-compliant when this check applies and the code does not show that tooltips, popovers, and flyouts can be dismissed without moving pointer hover or keyboard focus unless dismissal is not needed."
+        },
+        {
+          "test_criteria": "Extra content stays visible while needed",
+          "rule": "Check that additional content remains visible while the trigger is hovered or focused and does not disappear when moving onto it.",
+          "description": "What to check: Check that additional content remains visible while the trigger is hovered or focused and does not disappear when moving onto it. Compliant when additional content remains visible while the trigger is hovered or focused and does not disappear when moving onto it. Non-compliant when this check applies and the code does not show that additional content remains visible while the trigger is hovered or focused and does not disappear when moving onto it."
+        },
+        {
+          "test_criteria": "Additional content does not obscure critical information",
+          "rule": "Ensure hover or focus content is positioned so users can perceive both the trigger and the revealed content.",
+          "description": "What to check: Ensure hover or focus content is positioned so users can perceive both the trigger and the revealed content. Compliant when hover or focus content is positioned so users can perceive both the trigger and the revealed content. Non-compliant when this check applies and the code does not show that hover or focus content is positioned so users can perceive both the trigger and the revealed content."
+        },
+        {
+          "test_criteria": "ESC or easily-found control dismisses; no unexpected loss of content while moving pointer.",
+          "rule": "Additional content (tooltips/popovers) must be dismissible, hoverable, and persistent.",
+          "description": "What to check: Additional content (tooltips/popovers) must be dismissible, hoverable, and persistent. Compliant when additional content (tooltips/popovers) must be dismissible, hoverable, and persistent. Non-compliant when this check applies and the code does not show that additional content (tooltips/popovers) must be dismissible, hoverable, and persistent."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 2.1.4 Character Key Shortcuts",
+      "guideline": "WCAG 2.1: 2.1.4 Character Key Shortcuts 2.1 Keyboard Accessible",
+      "level": "A",
+      "description": "Character Key Shortcuts in Keyboard focuses on whether single-letter, number, punctuation, or symbol shortcuts can be turned off, remapped, or are active only on focus and shortcuts do not trigger unexpectedly when users dictate text into inputs or voice software.",
+      "checks": [
+        {
+          "test_criteria": "Single-character shortcuts can be disabled or remapped",
+          "rule": "Verify single-letter, number, punctuation, or symbol shortcuts can be turned off, remapped, or are active only on focus.",
+          "description": "What to check: Verify single-letter, number, punctuation, or symbol shortcuts can be turned off, remapped, or are active only on focus. Compliant when single-letter, number, punctuation, or symbol shortcuts can be turned off, remapped, or are active only on focus. Non-compliant when this check applies and the code does not show that single-letter, number, punctuation, or symbol shortcuts can be turned off, remapped, or are active only on focus."
+        },
+        {
+          "test_criteria": "Character shortcuts do not interfere with speech input",
+          "rule": "Check that shortcuts do not trigger unexpectedly when users dictate text into inputs or voice software.",
+          "description": "What to check: Check that shortcuts do not trigger unexpectedly when users dictate text into inputs or voice software. Compliant when shortcuts do not trigger unexpectedly when users dictate text into inputs or voice software. Non-compliant when this check applies and the code does not show that shortcuts do not trigger unexpectedly when users dictate text into inputs or voice software."
+        },
+        {
+          "test_criteria": "Detect single-key handlers; provide off/remap; scope shortcuts to focused elements only.",
+          "rule": "Check that single-character keyboard shortcuts can be turned off, remapped, or only active on focus.",
+          "description": "What to check: Check that single-character keyboard shortcuts can be turned off, remapped, or only active on focus. Compliant when single-character keyboard shortcuts can be turned off, remapped, or only active on focus. Non-compliant when this check applies and the code does not show that single-character keyboard shortcuts can be turned off, remapped, or only active on focus."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.2 2.4.11 Focus Not Obscured (Minimum)",
+      "guideline": "WCAG 2.2: 2.4.11 Focus Not Obscured (Minimum) 2.4 Navigable",
+      "level": "AA",
+      "description": "Focus Not Obscured (Minimum) in Keyboard focuses on whether sticky headers, footers, banners, overlays, and other persistent page chrome do not completely cover the component that receives keyboard focus and content opened by the user overlaps the focused item, the user can dismiss or move that content without advancing focus. This is especially relevant when keyboard users tab through links in shared headers, footers, and sticky navigation.",
+      "checks": [
+        {
+          "test_criteria": "Focused components are not fully obscured",
+          "rule": "Verify sticky headers, footers, banners, and overlays do not completely cover the component that receives keyboard focus.",
+          "description": "What to check: Verify sticky headers, footers, banners, and overlays do not completely cover the component that receives keyboard focus. Compliant when sticky headers, footers, banners, and overlays do not completely cover the component that receives keyboard focus. Non-compliant when this check applies and the code does not show that sticky headers, footers, banners, and overlays do not completely cover the component that receives keyboard focus."
+        },
+        {
+          "test_criteria": "Users can reveal covered focus without moving on",
+          "rule": "Check that if content opened by the user overlaps the focused item, the user can dismiss or move that content without advancing focus.",
+          "description": "What to check: Check that if content opened by the user overlaps the focused item, the user can dismiss or move that content without advancing focus. Compliant when content opened by the user overlaps the focused item, the user can dismiss or move that content without advancing focus. Non-compliant when this check applies and the code does not show that content opened by the user overlaps the focused item, the user can dismiss or move that content without advancing focus."
+        },
+        {
+          "test_criteria": "Focused component is not entirely hidden by author content.",
+          "rule": "Prevent sticky headers/footers or banners from fully covering focused items; allow reveal without advancing focus.",
+          "description": "What to check: Prevent sticky headers/footers or banners from fully covering focused items; allow reveal without advancing focus. Compliant when prevent sticky headers/footers or banners from fully covering focused items; allow reveal without advancing focus. Non-compliant when this check applies and the code does not show that prevent sticky headers/footers or banners from fully covering focused items; allow reveal without advancing focus."
+        }
+      ]
+    }
+  ],
+  "Content Blocks": [
+    {
+      "sc_id": "WCAG 2.0 1.3.3 Sensory Characteristics",
+      "guideline": "WCAG 2.0: 1.3.3\nSensory Characteristics of components",
+      "level": "A",
+      "description": "Sensory Characteristics in Content Blocks focuses on whether directions do not depend only on shape, color, size, visual location, orientation, or sound and instructions also reference labels, names, or text descriptions such as button text or field names.",
+      "checks": [
+        {
+          "test_criteria": "Instructions do not rely only on sensory cues",
+          "rule": "Verify directions do not depend only on shape, color, size, visual location, orientation, or sound.",
+          "description": "What to check: Verify directions do not depend only on shape, color, size, visual location, orientation, or sound. Compliant when directions do not depend only on shape, color, size, visual location, orientation, or sound. Non-compliant when this check applies and the code does not show that directions do not depend only on shape, color, size, visual location, orientation, or sound."
+        },
+        {
+          "test_criteria": "Alternative identifiers are provided",
+          "rule": "Check that instructions also reference labels, names, or text descriptions such as button text or field names.",
+          "description": "What to check: Check that instructions also reference labels, names, or text descriptions such as button text or field names. Compliant when instructions also reference labels, names, or text descriptions such as button text or field names. Non-compliant when this check applies and the code does not show that instructions also reference labels, names, or text descriptions such as button text or field names."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.3.1 Info and Relationships",
+      "guideline": "WCAG 2.0: 1.3.1 Info and Relationship",
+      "level": "A",
+      "description": "Info and Relationships in Content Blocks focuses on whether headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA, relationships shown visually by position, indentation, or styling are also available in markup or text, and labels, legends, captions, and table headers are correctly associated with the controls or data they describe.",
+      "checks": [
+        {
+          "test_criteria": "Structure is programmatically exposed",
+          "rule": "Verify headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA.",
+          "description": "What to check: Verify headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA. Compliant when headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA. Non-compliant when this check applies and the code does not show that headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA."
+        },
+        {
+          "test_criteria": "Instructions are not conveyed by layout alone",
+          "rule": "Check that relationships shown visually by position, indentation, or styling are also available in markup or text.",
+          "description": "What to check: Check that relationships shown visually by position, indentation, or styling are also available in markup or text. Compliant when relationships shown visually by position, indentation, or styling are also available in markup or text. Non-compliant when this check applies and the code does not show that relationships shown visually by position, indentation, or styling are also available in markup or text."
+        },
+        {
+          "test_criteria": "Controls are associated with their names and groups",
+          "rule": "Ensure labels, legends, captions, and table headers are correctly associated with the controls or data they describe.",
+          "description": "What to check: Ensure labels, legends, captions, and table headers are correctly associated with the controls or data they describe. Compliant when labels, legends, captions, and table headers are correctly associated with the controls or data they describe. Non-compliant when this check applies and the code does not show that labels, legends, captions, and table headers are correctly associated with the controls or data they describe."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.4.1 Use of Color",
+      "guideline": "WCAG 2.0: 1.4.1\nUse of Color",
+      "level": "A",
+      "description": "Use of Color in Content Blocks focuses on whether color is not the only way errors, required fields, status, or selection are communicated and icons, patterns, text, or programmatic states supplement any information conveyed with color.",
+      "checks": [
+        {
+          "test_criteria": "Color is not the only cue",
+          "rule": "Verify color is not the only way errors, required fields, status, or selection are communicated.",
+          "description": "What to check: Verify color is not the only way errors, required fields, status, or selection are communicated. Compliant when color is not the only way errors, required fields, status, or selection are communicated. Non-compliant when this check applies and the code does not show that color is not the only way errors, required fields, status, or selection are communicated."
+        },
+        {
+          "test_criteria": "Alternative visual or textual indicators exist",
+          "rule": "Check that icons, patterns, text, or programmatic states supplement any information conveyed with color.",
+          "description": "What to check: Check that icons, patterns, text, or programmatic states supplement any information conveyed with color. Compliant when icons, patterns, text, or programmatic states supplement any information conveyed with color. Non-compliant when this check applies and the code does not show that icons, patterns, text, or programmatic states supplement any information conveyed with color."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.4.3 Contrast (Minimum)",
+      "guideline": "WCAG 2.0: 1.4.3\nColor contrast",
+      "level": "AA",
+      "description": "Contrast (Minimum) in Content Blocks focuses on whether normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background and text embedded in images meets the same contrast requirements unless an exception applies.",
+      "checks": [
+        {
+          "test_criteria": "Text contrast meets minimum ratio",
+          "rule": "Verify normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background.",
+          "description": "What to check: Verify normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background. Compliant when normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background. Non-compliant when this check applies and the code does not show that normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background."
+        },
+        {
+          "test_criteria": "Images of text also meet contrast",
+          "rule": "Check that text embedded in images meets the same contrast requirements unless an exception applies.",
+          "description": "What to check: Check that text embedded in images meets the same contrast requirements unless an exception applies. Compliant when text embedded in images meets the same contrast requirements unless an exception applies. Non-compliant when this check applies and the code does not show that text embedded in images meets the same contrast requirements unless an exception applies."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.4.4 Resize Text",
+      "guideline": "WCAG 2.0: 1.4.4\nResize text",
+      "level": "AA",
+      "description": "Resize Text in Content Blocks focuses on whether zoom text to 200 percent or equivalent and verify no loss of content or functionality occurs and controls, labels, and paragraphs do not overlap, clip, or become unusable when text is enlarged.",
+      "checks": [
+        {
+          "test_criteria": "Text can be resized to 200 percent",
+          "rule": "Zoom text to 200 percent or equivalent and verify no loss of content or functionality occurs.",
+          "description": "What to check: Zoom text to 200 percent or equivalent and verify no loss of content or functionality occurs. Compliant when zoom text to 200 percent or equivalent and verify no loss of content or functionality occurs. Non-compliant when this check applies and the code does not show that zoom text to 200 percent or equivalent and verify no loss of content or functionality occurs."
+        },
+        {
+          "test_criteria": "Layout survives text enlargement",
+          "rule": "Check that controls, labels, and paragraphs do not overlap, clip, or become unusable when text is enlarged.",
+          "description": "What to check: Check that controls, labels, and paragraphs do not overlap, clip, or become unusable when text is enlarged. Compliant when controls, labels, and paragraphs do not overlap, clip, or become unusable when text is enlarged. Non-compliant when this check applies and the code does not show that controls, labels, and paragraphs do not overlap, clip, or become unusable when text is enlarged."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 1.3.4 Orientation",
+      "guideline": "WCAG 2.1: 1.3.4 Orientation 1.3 Adaptable",
+      "level": "AA",
+      "description": "Orientation in Content Blocks focuses on whether rotate the viewport and verify the page remains operable and readable in both orientations unless one is essential and cSS, scripts, and viewport settings do not force a single orientation except for essential cases.",
+      "checks": [
+        {
+          "test_criteria": "Content works in portrait and landscape",
+          "rule": "Rotate the viewport and verify the page remains operable and readable in both orientations unless one is essential.",
+          "description": "What to check: Rotate the viewport and verify the page remains operable and readable in both orientations unless one is essential. Compliant when rotate the viewport and verify the page remains operable and readable in both orientations unless one is essential. Non-compliant when this check applies and the code does not show that rotate the viewport and verify the page remains operable and readable in both orientations unless one is essential."
+        },
+        {
+          "test_criteria": "Orientation is not locked without justification",
+          "rule": "Check that CSS, scripts, and viewport settings do not force a single orientation except for essential cases.",
+            "description": "What to check: Check that CSS, scripts, and viewport settings do not force a single orientation except for essential cases. Compliant when CSS, scripts, and viewport settings do not force a single orientation except for essential cases. Non-compliant when this check applies and the code does not show that CSS, scripts, and viewport settings do not force a single orientation except for essential cases."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 1.4.10 Reflow",
+      "guideline": "WCAG 2.1: 1.4.10 Reflow 1.4 Distinguishable",
+      "level": "AA",
+      "description": "Reflow in Content Blocks focuses on whether resize content to 320 CSS pixels wide or 256 CSS pixels tall and verify no two-dimensional scrolling is required except where essential and dialogs, menus, tables, and form controls stay visible and operable without off-screen loss.",
+      "checks": [
+        {
+          "test_criteria": "Reflow works at narrow viewport sizes",
+          "rule": "Resize content to 320 CSS pixels wide or 256 CSS pixels tall and verify no two-dimensional scrolling is required except where essential.",
+          "description": "What to check: Resize content to 320 CSS pixels wide or 256 CSS pixels tall and verify no two-dimensional scrolling is required except where essential. Compliant when resize content to 320 CSS pixels wide or 256 CSS pixels tall and verify no two-dimensional scrolling is required except where essential. Non-compliant when this check applies and the code does not show that resize content to 320 CSS pixels wide or 256 CSS pixels tall and verify no two-dimensional scrolling is required except where essential."
+        },
+        {
+          "test_criteria": "Content remains available without clipping",
+          "rule": "Check that dialogs, menus, tables, and form controls stay visible and operable without off-screen loss.",
+          "description": "What to check: Check that dialogs, menus, tables, and form controls stay visible and operable without off-screen loss. Compliant when dialogs, menus, tables, and form controls stay visible and operable without off-screen loss. Non-compliant when this check applies and the code does not show that dialogs, menus, tables, and form controls stay visible and operable without off-screen loss."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 1.4.11 Non-text Contrast",
+      "guideline": "WCAG 2.1: 1.4.11 Non-text Contrast 1.4 Distinguishable",
+      "level": "AA",
+      "description": "Non-text Contrast in Content Blocks focuses on whether control boundaries, icons, focus indicators, and meaningful graphical objects have at least 3:1 contrast against adjacent colors and selected, pressed, expanded, and error states are still distinguishable without relying on low-contrast styling.",
+      "checks": [
+        {
+          "test_criteria": "Essential graphics and controls have 3:1 contrast",
+          "rule": "Verify control boundaries, icons, focus indicators, and meaningful graphical objects have at least 3:1 contrast against adjacent colors.",
+          "description": "What to check: Verify control boundaries, icons, focus indicators, and meaningful graphical objects have at least 3:1 contrast against adjacent colors. Compliant when control boundaries, icons, focus indicators, and meaningful graphical objects have at least 3:1 contrast against adjacent colors. Non-compliant when this check applies and the code does not show that control boundaries, icons, focus indicators, and meaningful graphical objects have at least 3:1 contrast against adjacent colors."
+        },
+        {
+          "test_criteria": "State changes remain visually clear",
+          "rule": "Check that selected, pressed, expanded, and error states are still distinguishable without relying on low-contrast styling.",
+          "description": "What to check: Check that selected, pressed, expanded, and error states are still distinguishable without relying on low-contrast styling. Compliant when selected, pressed, expanded, and error states are still distinguishable without relying on low-contrast styling. Non-compliant when this check applies and the code does not show that selected, pressed, expanded, and error states are still distinguishable without relying on low-contrast styling."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 1.4.12 Text Spacing",
+      "guideline": "WCAG 2.1: 1.4.12 Text Spacing 1.4 Distinguishable",
+      "level": "AA",
+      "description": "Text Spacing in Content Blocks focuses on whether apply line-height 1.5, paragraph spacing 2, letter spacing 0.12em, and word spacing 0.16em and verify no loss of content or function and controls, helper text, and inline links remain readable and usable when custom text spacing is applied.",
+      "checks": [
+        {
+          "test_criteria": "Text spacing overrides do not break content",
+          "rule": "Apply line-height 1.5, paragraph spacing 2, letter spacing 0.12em, and word spacing 0.16em and verify no loss of content or function.",
+          "description": "What to check: Apply line-height 1.5, paragraph spacing 2, letter spacing 0.12em, and word spacing 0.16em and verify no loss of content or function. Compliant when apply line-height 1.5, paragraph spacing 2, letter spacing 0.12em, and word spacing 0.16em and verify no loss of content or function. Non-compliant when this check applies and the code does not show that apply line-height 1.5, paragraph spacing 2, letter spacing 0.12em, and word spacing 0.16em and verify no loss of content or function."
+        },
+        {
+          "test_criteria": "No clipping or overlap occurs",
+          "rule": "Check that controls, helper text, and inline links remain readable and usable when custom text spacing is applied.",
+          "description": "What to check: Check that controls, helper text, and inline links remain readable and usable when custom text spacing is applied. Compliant when controls, helper text, and inline links remain readable and usable when custom text spacing is applied. Non-compliant when this check applies and the code does not show that controls, helper text, and inline links remain readable and usable when custom text spacing is applied."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 1.4.13 Content on Hover or Focus",
+      "guideline": "WCAG 2.1: 1.4.13 Content on Hover or Focus 1.4 Distinguishable",
+      "level": "AA",
+      "description": "Content on Hover or Focus in Content Blocks focuses on whether tooltips, popovers, and flyouts can be dismissed without moving pointer hover or keyboard focus unless dismissal is not needed, additional content remains visible while the trigger is hovered or focused and does not disappear when moving onto it, and hover or focus content is positioned so users can perceive both the trigger and the revealed content.",
+      "checks": [
+        {
+          "test_criteria": "Hover or focus content can be dismissed",
+          "rule": "Verify tooltips, popovers, and flyouts can be dismissed without moving pointer hover or keyboard focus unless dismissal is not needed.",
+          "description": "What to check: Verify tooltips, popovers, and flyouts can be dismissed without moving pointer hover or keyboard focus unless dismissal is not needed. Compliant when tooltips, popovers, and flyouts can be dismissed without moving pointer hover or keyboard focus unless dismissal is not needed. Non-compliant when this check applies and the code does not show that tooltips, popovers, and flyouts can be dismissed without moving pointer hover or keyboard focus unless dismissal is not needed."
+        },
+        {
+          "test_criteria": "Extra content stays visible while needed",
+          "rule": "Check that additional content remains visible while the trigger is hovered or focused and does not disappear when moving onto it.",
+          "description": "What to check: Check that additional content remains visible while the trigger is hovered or focused and does not disappear when moving onto it. Compliant when additional content remains visible while the trigger is hovered or focused and does not disappear when moving onto it. Non-compliant when this check applies and the code does not show that additional content remains visible while the trigger is hovered or focused and does not disappear when moving onto it."
+        },
+        {
+          "test_criteria": "Additional content does not obscure critical information",
+          "rule": "Ensure hover or focus content is positioned so users can perceive both the trigger and the revealed content.",
+          "description": "What to check: Ensure hover or focus content is positioned so users can perceive both the trigger and the revealed content. Compliant when hover or focus content is positioned so users can perceive both the trigger and the revealed content. Non-compliant when this check applies and the code does not show that hover or focus content is positioned so users can perceive both the trigger and the revealed content."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.2 2.4.11 Focus Not Obscured (Minimum)",
+      "guideline": "WCAG 2.2: 2.4.11 Focus Not Obscured (Minimum) 2.4 Navigable",
+      "level": "AA",
+      "description": "Focus Not Obscured (Minimum) in Content Blocks focuses on whether sticky headers, footers, banners, and overlays do not completely cover the component that receives keyboard focus and content opened by the user overlaps the focused item, the user can dismiss or move that content without advancing focus.",
+      "checks": [
+        {
+          "test_criteria": "Focused components are not fully obscured",
+          "rule": "Verify sticky headers, footers, banners, and overlays do not completely cover the component that receives keyboard focus.",
+          "description": "What to check: Verify sticky headers, footers, banners, and overlays do not completely cover the component that receives keyboard focus. Compliant when sticky headers, footers, banners, and overlays do not completely cover the component that receives keyboard focus. Non-compliant when this check applies and the code does not show that sticky headers, footers, banners, and overlays do not completely cover the component that receives keyboard focus."
+        },
+        {
+          "test_criteria": "Users can reveal covered focus without moving on",
+          "rule": "Check that if content opened by the user overlaps the focused item, the user can dismiss or move that content without advancing focus.",
+          "description": "What to check: Check that if content opened by the user overlaps the focused item, the user can dismiss or move that content without advancing focus. Compliant when content opened by the user overlaps the focused item, the user can dismiss or move that content without advancing focus. Non-compliant when this check applies and the code does not show that content opened by the user overlaps the focused item, the user can dismiss or move that content without advancing focus."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.2 2.5.8 Target Size (Minimum)",
+      "guideline": "WCAG 2.2: 2.5.8 Target Size (Minimum) 2.5 Input Modalities",
+      "level": "AA",
+      "description": "Target Size (Minimum) in Content Blocks focuses on whether targets meet the minimum 24 by 24 CSS pixel size or spacing requirement unless an allowed exception applies and smaller controls have enough separation so a 24 pixel circle around each target does not overlap.",
+      "checks": [
+        {
+          "test_criteria": "Pointer targets are at least 24 by 24 CSS pixels",
+          "rule": "Verify targets meet the minimum 24 by 24 CSS pixel size or spacing requirement unless an allowed exception applies.",
+          "description": "What to check: Verify targets meet the minimum 24 by 24 CSS pixel size or spacing requirement unless an allowed exception applies. Compliant when targets meet the minimum 24 by 24 CSS pixel size or spacing requirement unless an allowed exception applies. Non-compliant when this check applies and the code does not show that targets meet the minimum 24 by 24 CSS pixel size or spacing requirement unless an allowed exception applies."
+        },
+        {
+          "test_criteria": "Spacing avoids accidental activation",
+          "rule": "Check that smaller controls have enough separation so a 24 pixel circle around each target does not overlap.",
+          "description": "What to check: Check that smaller controls have enough separation so a 24 pixel circle around each target does not overlap. Compliant when smaller controls have enough separation so a 24 pixel circle around each target does not overlap. Non-compliant when this check applies and the code does not show that smaller controls have enough separation so a 24 pixel circle around each target does not overlap."
+        }
+      ]
+    }
+  ],
+  "Page Structure": [
+    {
+      "sc_id": "WCAG 2.0 2.4.2 Page Titled",
+      "guideline": "WCAG 2.0: 2.4.2\nPage Title",
+      "level": "A",
+      "description": "Page Titled in Page Structure focuses on whether the document title identifies the page topic or purpose and route changes, dialogs treated as pages, and transaction steps update the title meaningfully.",
+      "checks": [
+        {
+          "test_criteria": "Each page has a descriptive title",
+          "rule": "Verify the document title identifies the page topic or purpose.",
+          "description": "What to check: Verify the document title identifies the page topic or purpose. Compliant when the document title identifies the page topic or purpose. Non-compliant when this check applies and the code does not show that the document title identifies the page topic or purpose."
+        },
+        {
+          "test_criteria": "Titles change when the page purpose changes",
+          "rule": "Check that route changes, dialogs treated as pages, and transaction steps update the title meaningfully.",
+          "description": "What to check: Check that route changes, dialogs treated as pages, and transaction steps update the title meaningfully. Compliant when route changes, dialogs treated as pages, and transaction steps update the title meaningfully. Non-compliant when this check applies and the code does not show that route changes, dialogs treated as pages, and transaction steps update the title meaningfully."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 3.1.1 Language of Page",
+      "guideline": "WCAG 2.0: 3.1.1\nLanguage of Page",
+      "level": "A",
+      "description": "Language of Page in Page Structure focuses on whether the root html element exposes the default human language with a valid lang attribute and the language code matches the primary language users encounter on the page.",
+      "checks": [
+        {
+          "test_criteria": "Default page language is declared",
+          "rule": "Verify the root html element exposes the default human language with a valid lang attribute.",
+          "description": "What to check: Verify the root html element exposes the default human language with a valid lang attribute. Compliant when the root html element exposes the default human language with a valid lang attribute. Non-compliant when this check applies and the code does not show that the root html element exposes the default human language with a valid lang attribute."
+        },
+        {
+          "test_criteria": "Declared language matches visible content",
+          "rule": "Check that the language code matches the primary language users encounter on the page.",
+          "description": "What to check: Check that the language code matches the primary language users encounter on the page. Compliant when the language code matches the primary language users encounter on the page. Non-compliant when this check applies and the code does not show that the language code matches the primary language users encounter on the page."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 3.1.2 Language of Parts",
+      "guideline": "WCAG 2.0: 3.1.2\nLanguage of parts",
+      "level": "AA",
+      "description": "Language of Parts in Page Structure focuses on whether passages or phrases in a different human language are marked with the correct lang attribute and proper names, technical terms, or words assimilated into the surrounding language are not over-marked unnecessarily.",
+      "checks": [
+        {
+          "test_criteria": "Language changes within content are marked",
+          "rule": "Verify passages or phrases in a different human language are marked with the correct lang attribute.",
+          "description": "What to check: Verify passages or phrases in a different human language are marked with the correct lang attribute. Compliant when passages or phrases in a different human language are marked with the correct lang attribute. Non-compliant when this check applies and the code does not show that passages or phrases in a different human language are marked with the correct lang attribute."
+        },
+        {
+          "test_criteria": "Exceptions are applied correctly",
+          "rule": "Check that proper names, technical terms, or words assimilated into the surrounding language are not over-marked unnecessarily.",
+          "description": "What to check: Check that proper names, technical terms, or words assimilated into the surrounding language are not over-marked unnecessarily. Compliant when proper names, technical terms, or words assimilated into the surrounding language are not over-marked unnecessarily. Non-compliant when this check applies and the code does not show that proper names, technical terms, or words assimilated into the surrounding language are not over-marked unnecessarily."
+        }
+      ]
+    },
+    {
+      "sc_id": "Meta data",
+      "guideline": "Meta data",
+      "level": "N/A",
+      "description": "Meta data in Page Structure focuses on whether the page exposes a meaningful title and any required descriptive metadata in the document head and metadata such as title, language, and viewport settings support, rather than undermine, the accessible experience.",
+      "checks": [
+        {
+          "test_criteria": "Document metadata is present and current",
+          "rule": "Verify the page exposes a meaningful title and any required descriptive metadata in the document head.",
+          "description": "What to check: Verify the page exposes a meaningful title and any required descriptive metadata in the document head. Compliant when the page exposes a meaningful title and any required descriptive metadata in the document head. Non-compliant when this check applies and the code does not show that the page exposes a meaningful title and any required descriptive metadata in the document head."
+        },
+        {
+          "test_criteria": "Metadata does not conflict with accessibility declarations",
+          "rule": "Check that metadata such as title, language, and viewport settings support, rather than undermine, the accessible experience.",
+          "description": "What to check: Check that metadata such as title, language, and viewport settings support, rather than undermine, the accessible experience. Compliant when metadata such as title, language, and viewport settings support, rather than undermine, the accessible experience. Non-compliant when this check applies and the code does not show that metadata such as title, language, and viewport settings support, rather than undermine, the accessible experience."
+        }
+      ]
+    },
+    {
+      "sc_id": "Zoom Check",
+      "guideline": "Zoom Check",
+      "level": "AA",
+      "description": "Zoom Check in Page Structure focuses on whether the page remains readable and functional at 200 percent browser zoom and viewport and CSS settings do not disable pinch zoom, clip content, or create unusable overlays when zoomed.",
+      "checks": [
+        {
+          "test_criteria": "Browser zoom remains usable",
+          "rule": "Verify the page remains readable and functional at 200 percent browser zoom.",
+          "description": "What to check: Verify the page remains readable and functional at 200 percent browser zoom. Compliant when the page remains readable and functional at 200 percent browser zoom. Non-compliant when this check applies and the code does not show that the page remains readable and functional at 200 percent browser zoom."
+        },
+        {
+          "test_criteria": "Author settings do not block zoom or scale",
+          "rule": "Check that viewport and CSS settings do not disable pinch zoom, clip content, or create unusable overlays when zoomed.",
+          "description": "What to check: Check that viewport and CSS settings do not disable pinch zoom, clip content, or create unusable overlays when zoomed. Compliant when viewport and CSS settings do not disable pinch zoom, clip content, or create unusable overlays when zoomed. Non-compliant when this check applies and the code does not show that viewport and CSS settings do not disable pinch zoom, clip content, or create unusable overlays when zoomed."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.3.1 Info and Relationships",
+      "guideline": "1.3.1 Page Regions",
+      "level": "A",
+      "description": "Info and Relationships in Page Structure focuses on whether header, navigation, main, search, and footer regions are exposed with native landmarks or equivalent ARIA roles and multiple landmarks of the same type are distinguished with meaningful accessible names.",
+      "checks": [
+        {
+          "test_criteria": "Page regions are identified semantically",
+          "rule": "Verify header, navigation, main, search, and footer regions are exposed with native landmarks or equivalent ARIA roles.",
+          "description": "What to check: Verify header, navigation, main, search, and footer regions are exposed with native landmarks or equivalent ARIA roles. Compliant when header, navigation, main, search, and footer regions are exposed with native landmarks or equivalent ARIA roles. Non-compliant when this check applies and the code does not show that header, navigation, main, search, and footer regions are exposed with native landmarks or equivalent ARIA roles."
+        },
+        {
+          "test_criteria": "Repeated regions have clear labels when needed",
+          "rule": "Check that multiple landmarks of the same type are distinguished with meaningful accessible names.",
+          "description": "What to check: Check that multiple landmarks of the same type are distinguished with meaningful accessible names. Compliant when multiple landmarks of the same type are distinguished with meaningful accessible names. Non-compliant when this check applies and the code does not show that multiple landmarks of the same type are distinguished with meaningful accessible names."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 1.3.4 Orientation",
+      "guideline": "WCAG 2.1: 1.3.4 Orientation 1.3 Adaptable",
+      "level": "AA",
+      "description": "Orientation in Page Structure focuses on whether rotate the viewport and verify the page remains operable and readable in both orientations unless one is essential and cSS, scripts, and viewport settings do not force a single orientation except for essential cases.",
+      "checks": [
+        {
+          "test_criteria": "Content works in portrait and landscape",
+          "rule": "Rotate the viewport and verify the page remains operable and readable in both orientations unless one is essential.",
+          "description": "What to check: Rotate the viewport and verify the page remains operable and readable in both orientations unless one is essential. Compliant when rotate the viewport and verify the page remains operable and readable in both orientations unless one is essential. Non-compliant when this check applies and the code does not show that rotate the viewport and verify the page remains operable and readable in both orientations unless one is essential."
+        },
+        {
+          "test_criteria": "Orientation is not locked without justification",
+          "rule": "Check that CSS, scripts, and viewport settings do not force a single orientation except for essential cases.",
+          "description": "What to check: Check that CSS, scripts, and viewport settings do not force a single orientation except for essential cases. Compliant when cSS, scripts, and viewport settings do not force a single orientation except for essential cases. Non-compliant when this check applies and the code does not show that cSS, scripts, and viewport settings do not force a single orientation except for essential cases."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 4.1.1 Parsing",
+      "guideline": "WCAG 2.0 4.1.1",
+      "level": "A",
+      "description": "Parsing in Page Structure focuses on whether for duplicate id values, duplicate attributes, broken start or end tags, and incorrect nesting that could still affect assistive technology behavior and when a parsing problem breaks relationships or names, record it under 1.3.1 or 4.1.2 as well as any legacy 4.1.1 reporting.",
+      "checks": [
+        {
+          "test_criteria": "Markup is syntactically reliable for legacy testing",
+          "rule": "Check for duplicate id values, duplicate attributes, broken start or end tags, and incorrect nesting that could still affect assistive technology behavior.",
+           "description": "What to check: Review markup for duplicate id values, duplicate attributes, broken start or end tags, and incorrect nesting that could affect assistive technology behavior. Compliant when the code does not contain duplicate id values, duplicate attributes, broken start or end tags, or incorrect nesting that affect assistive technology behavior. Non-compliant when duplicate id values, duplicate attributes, broken start or end tags, or incorrect nesting are present in a way that can affect assistive technology behavior."
+        },
+        {
+          "test_criteria": "Parsing issues are redirected to the right criterion when needed",
+          "rule": "When a parsing problem breaks relationships or names, record it under 1.3.1 or 4.1.2 as well as any legacy 4.1.1 reporting.",
+          "description": "What to check: When a parsing problem breaks relationships or names, record it under 1.3.1 or 4.1.2 as well as any legacy 4.1.1 reporting. Compliant when a parsing problem breaks relationships or names, record it under 1.3.1 or 4.1.2 as well as any legacy 4.1.1 reporting. Non-compliant when this check applies and the code does not show that a parsing problem breaks relationships or names, record it under 1.3.1 or 4.1.2 as well as any legacy 4.1.1 reporting."
+        }
+      ]
+    }
+  ],
+  "Headings": [
+    {
+      "sc_id": "WCAG 2.0 1.3.1 Info and Relationships",
+      "guideline": "1.3.1 Info and Relationships",
+      "level": "A",
+      "description": "Info and Relationships in Headings focuses on whether proper heading semantic markup <h> is used when content is a heading, a heading exists for each section exists, and heading markup is not used for preseation or visual effect or when content is not a heading.",
+      "checks": [
+        {
+          "test_criteria": "Heading markup",
+          "rule": "Check that proper heading semantic markup <h> is used when content is a heading.",
+          "description": "What to check: Check that proper heading semantic markup <h> is used when content is a heading. Compliant when proper heading semantic markup <h> is used when content is a heading. Non-compliant when this check applies and the code does not show that proper heading semantic markup <h> is used when content is a heading."
+        },
+        {
+          "test_criteria": "Page Organization",
+          "rule": "Check that a heading exists for each section exists.",
+          "description": "What to check: Check that a heading exists for each section exists. Compliant when a heading exists for each section exists. Non-compliant when this check applies and the code does not show that a heading exists for each section exists."
+        },
+        {
+          "test_criteria": "Heading markup used for presentation effect",
+          "rule": "Check that heading markup is not used for preseation or visual effect or when content is not a heading.",
+          "description": "What to check: Check that heading markup is not used for preseation or visual effect or when content is not a heading. Compliant when heading markup is not used for preseation or visual effect or when content is not a heading. Non-compliant when this check applies and the code does not show that heading markup is not used for preseation or visual effect or when content is not a heading."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 2.4.6 Headings and Labels",
+      "guideline": "2.4.6",
+      "level": "AA",
+      "description": "Headings and Labels in Headings focuses on whether headings and form labels accurately describe the section, field, or control they identify and visible names such as button text, dialog titles, and section headings are specific enough to support scanning.",
+      "checks": [
+        {
+          "test_criteria": "Headings and labels describe purpose",
+          "rule": "Verify headings and form labels accurately describe the section, field, or control they identify.",
+          "description": "What to check: Verify headings and form labels accurately describe the section, field, or control they identify. Compliant when headings and form labels accurately describe the section, field, or control they identify. Non-compliant when this check applies and the code does not show that headings and form labels accurately describe the section, field, or control they identify."
+        },
+        {
+          "test_criteria": "Generic labels are avoided",
+          "rule": "Check that visible names such as button text, dialog titles, and section headings are specific enough to support scanning.",
+          "description": "What to check: Check that visible names such as button text, dialog titles, and section headings are specific enough to support scanning. Compliant when visible names such as button text, dialog titles, and section headings are specific enough to support scanning. Non-compliant when this check applies and the code does not show that visible names such as button text, dialog titles, and section headings are specific enough to support scanning."
+        }
+      ]
+    }
+  ],
+  "Lists": [
+    {
+      "sc_id": "WCAG 2.0 1.3.1 Info and Relationships",
+      "guideline": "1.3.1 Info and Relationships",
+      "level": "A",
+      "description": "Info and Relationships in Lists focuses on whether content that has the visual appearance of a list (with or without bullets) is marked as an unordered list and the list tags are not used to create spacing between items.",
+      "checks": [
+        {
+          "test_criteria": "List",
+          "rule": "Check that content that has the visual appearance of a list (with or without bullets) is marked as an unordered list",
+          "description": "What to check: Check that content that has the visual appearance of a list (with or without bullets) is marked as an unordered list. Compliant when content that has the visual appearance of a list (with or without bullets) is marked as an unordered list. Non-compliant when this check applies and the code does not show that content that has the visual appearance of a list (with or without bullets) is marked as an unordered list."
+        },
+        {
+          "test_criteria": "Empty List tags",
+          "rule": "Check that the list tags are not used to create  spacing between items",
+          "description": "What to check: Check that the list tags are not used to create spacing between items. Compliant when the list tags are not used to create spacing between items. Non-compliant when this check applies and the code does not show that the list tags are not used to create spacing between items."
+        }
+      ]
+    }
+  ],
+  "Interactive Elements": [
+    {
+      "sc_id": "WCAG 2.0 2.1.1 Keyboard",
+      "guideline": "WCAG 2.0: 2.1.1",
+      "level": "A",
+      "description": "Keyboard in Interactive Elements focuses on whether every control, link, menu, dialog, and custom widget can be operated with a keyboard interface and drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent.",
+      "checks": [
+        {
+          "test_criteria": "All functionality works from the keyboard",
+          "rule": "Verify every control, link, menu, dialog, and custom widget can be operated with a keyboard interface.",
+          "description": "What to check: Verify every control, link, menu, dialog, and custom widget can be operated with a keyboard interface. Compliant when every control, link, menu, dialog, and custom widget can be operated with a keyboard interface. Non-compliant when this check applies and the code does not show that every control, link, menu, dialog, and custom widget can be operated with a keyboard interface."
+        },
+        {
+          "test_criteria": "No pointer-only interaction is required",
+          "rule": "Check that drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent.",
+          "description": "What to check: Check that drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent. Compliant when drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent. Non-compliant when this check applies and the code does not show that drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 2.1.2 No Keyboard Trap",
+      "guideline": "WCAG 2.0: 2.1.2",
+      "level": "A",
+      "description": "No Keyboard Trap in Interactive Elements focuses on whether focus can always be moved away from widgets, dialogs, editors, and embedded content using the keyboard alone and if a component needs keys other than standard Tab, Shift+Tab, or arrows to exit, provide clear instructions to the user.",
+      "checks": [
+        {
+          "test_criteria": "Keyboard users can exit every component",
+          "rule": "Verify focus can always be moved away from widgets, dialogs, editors, and embedded content using the keyboard alone.",
+          "description": "What to check: Verify focus can always be moved away from widgets, dialogs, editors, and embedded content using the keyboard alone. Compliant when focus can always be moved away from widgets, dialogs, editors, and embedded content using the keyboard alone. Non-compliant when this check applies and the code does not show that focus can always be moved away from widgets, dialogs, editors, and embedded content using the keyboard alone."
+        },
+        {
+          "test_criteria": "Any special exit method is explained",
+          "rule": "If a component needs keys other than standard Tab, Shift+Tab, or arrows to exit, provide clear instructions to the user.",
+          "description": "What to check: If a component needs keys other than standard Tab, Shift+Tab, or arrows to exit, provide clear instructions to the user. Compliant when a component needs keys other than standard Tab, Shift+Tab, or arrows to exit, provide clear instructions to the user. Non-compliant when this check applies and the code does not show that a component needs keys other than standard Tab, Shift+Tab, or arrows to exit, provide clear instructions to the user."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 4.1.2 Name, Role, Value",
+      "guideline": "WCAG 2.0: 4.1.2",
+      "level": "A",
+      "description": "Name, Role, Value in Interactive Elements focuses on whether each custom widget exposes an appropriate role and an accessible name, expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes, and scripted components support standard keyboard interaction and notify assistive technology when properties change.",
+      "checks": [
+        {
+          "test_criteria": "Name and role are programmatically exposed",
+          "rule": "Verify each custom widget exposes an appropriate role and an accessible name.",
+          "description": "What to check: Verify each custom widget exposes an appropriate role and an accessible name. Compliant when each custom widget exposes an appropriate role and an accessible name. Non-compliant when this check applies and the code does not show that each custom widget exposes an appropriate role and an accessible name."
+        },
+        {
+          "test_criteria": "States and values are kept in sync",
+          "rule": "Check that expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes.",
+          "description": "What to check: Check that expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes. Compliant when expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes. Non-compliant when this check applies and the code does not show that expanded, selected, checked, pressed, disabled, and current values are programmatically updated as the UI changes."
+        },
+        {
+          "test_criteria": "Users can operate custom controls with assistive tech",
+          "rule": "Ensure scripted components support standard keyboard interaction and notify assistive technology when properties change.",
+          "description": "What to check: Ensure scripted components support standard keyboard interaction and notify assistive technology when properties change. Compliant when scripted components support standard keyboard interaction and notify assistive technology when properties change. Non-compliant when this check applies and the code does not show that scripted components support standard keyboard interaction and notify assistive technology when properties change."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.3.1 Info and Relationships",
+      "guideline": "WCAG 2.0: 1.3.1",
+      "level": "A",
+      "description": "Info and Relationships in Interactive Elements focuses on whether headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA, relationships shown visually by position, indentation, or styling are also available in markup or text, and labels, legends, captions, and table headers are correctly associated with the controls or data they describe.",
+      "checks": [
+        {
+          "test_criteria": "Structure is programmatically exposed",
+          "rule": "Verify headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA.",
+          "description": "What to check: Verify headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA. Compliant when headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA. Non-compliant when this check applies and the code does not show that headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA."
+        },
+        {
+          "test_criteria": "Instructions are not conveyed by layout alone",
+          "rule": "Check that relationships shown visually by position, indentation, or styling are also available in markup or text.",
+          "description": "What to check: Check that relationships shown visually by position, indentation, or styling are also available in markup or text. Compliant when relationships shown visually by position, indentation, or styling are also available in markup or text. Non-compliant when this check applies and the code does not show that relationships shown visually by position, indentation, or styling are also available in markup or text."
+        },
+        {
+          "test_criteria": "Controls are associated with their names and groups",
+          "rule": "Ensure labels, legends, captions, and table headers are correctly associated with the controls or data they describe.",
+          "description": "What to check: Ensure labels, legends, captions, and table headers are correctly associated with the controls or data they describe. Compliant when labels, legends, captions, and table headers are correctly associated with the controls or data they describe. Non-compliant when this check applies and the code does not show that labels, legends, captions, and table headers are correctly associated with the controls or data they describe."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 2.4.4 Link Purpose (In Context)",
+      "guideline": "WCAG 2.0: 2.4.4",
+      "level": "A",
+      "description": "Link Purpose (In Context) in Interactive Elements focuses on whether link text alone, or link text plus programmatically associated context, makes the destination or action clear and repeated labels such as Read more, Learn more, or Click here have enough surrounding context to distinguish them.",
+      "checks": [
+        {
+          "test_criteria": "Link purpose is clear in context",
+          "rule": "Verify link text alone, or link text plus programmatically associated context, makes the destination or action clear.",
+          "description": "What to check: Verify link text alone, or link text plus programmatically associated context, makes the destination or action clear. Compliant when link text alone, or link text plus programmatically associated context, makes the destination or action clear. Non-compliant when this check applies and the code does not show that link text alone, or link text plus programmatically associated context, makes the destination or action clear."
+        },
+        {
+          "test_criteria": "Ambiguous link labels are clarified",
+          "rule": "Check that repeated labels such as Read more, Learn more, or Click here have enough surrounding context to distinguish them.",
+          "description": "What to check: Check that repeated labels such as Read more, Learn more, or Click here have enough surrounding context to distinguish them. Compliant when repeated labels such as Read more, Learn more, or Click here have enough surrounding context to distinguish them. Non-compliant when this check applies and the code does not show that repeated labels such as Read more, Learn more, or Click here have enough surrounding context to distinguish them."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.3.2 Meaningful Sequence",
+      "guideline": "WCAG 2.0: 1.3.2, 2.4.3",
+      "level": "A",
+      "description": "Meaningful Sequence in Interactive Elements focuses on whether the reading order and keyboard focus order of the widget preserve meaning and match the expected interaction pattern and opening, collapsing, reordering, or stepping through widget content does not create a confusing tab order.",
+      "checks": [
+        {
+          "test_criteria": "Sequence and focus order support the widget interaction",
+          "rule": "Verify the reading order and keyboard focus order of the widget preserve meaning and match the expected interaction pattern.",
+          "description": "What to check: Verify the reading order and keyboard focus order of the widget preserve meaning and match the expected interaction pattern. Compliant when the reading order and keyboard focus order of the widget preserve meaning and match the expected interaction pattern. Non-compliant when this check applies and the code does not show that the reading order and keyboard focus order of the widget preserve meaning and match the expected interaction pattern."
+        },
+        {
+          "test_criteria": "Dynamic updates do not scramble navigation",
+          "rule": "Check that opening, collapsing, reordering, or stepping through widget content does not create a confusing tab order.",
+          "description": "What to check: Check that opening, collapsing, reordering, or stepping through widget content does not create a confusing tab order. Compliant when opening, collapsing, reordering, or stepping through widget content does not create a confusing tab order. Non-compliant when this check applies and the code does not show that opening, collapsing, reordering, or stepping through widget content does not create a confusing tab order."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 2.4.7 Focus Visible",
+      "guideline": "WCAG 2.0: 2.4.7",
+      "level": "AA",
+      "description": "Focus Visible in Interactive Elements focuses on whether every keyboard-operable component has a visible focus indicator when focused and cSS or scripts do not remove outlines or otherwise hide the focused state without an adequate replacement.",
+      "checks": [
+        {
+          "test_criteria": "Keyboard focus is visibly indicated",
+          "rule": "Verify every keyboard-operable component has a visible focus indicator when focused.",
+          "description": "What to check: Verify every keyboard-operable component has a visible focus indicator when focused. Compliant when every keyboard-operable component has a visible focus indicator when focused. Non-compliant when this check applies and the code does not show that every keyboard-operable component has a visible focus indicator when focused."
+        },
+        {
+          "test_criteria": "Focus styling is not suppressed",
+          "rule": "Check that CSS or scripts do not remove outlines or otherwise hide the focused state without an adequate replacement.",
+          "description": "What to check: Check that CSS or scripts do not remove outlines or otherwise hide the focused state without an adequate replacement. Compliant when cSS or scripts do not remove outlines or otherwise hide the focused state without an adequate replacement. Non-compliant when this check applies and the code does not show that cSS or scripts do not remove outlines or otherwise hide the focused state without an adequate replacement."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 2.5.3 Label in Name",
+      "guideline": "WCAG 2.1: 2.5.3 Label in Name 2.5 Input Modalities",
+      "level": "A",
+      "description": "Label in Name in Interactive Elements focuses on whether the programmatic name of buttons, links, and custom controls includes the same text shown visually and speech users can activate controls using the words they see on screen, ideally at the start of the accessible name.",
+      "checks": [
+        {
+          "test_criteria": "Accessible name contains the visible label",
+          "rule": "Verify the programmatic name of buttons, links, and custom controls includes the same text shown visually.",
+          "description": "What to check: Verify the programmatic name of buttons, links, and custom controls includes the same text shown visually. Compliant when the programmatic name of buttons, links, and custom controls includes the same text shown visually. Non-compliant when this check applies and the code does not show that the programmatic name of buttons, links, and custom controls includes the same text shown visually."
+        },
+        {
+          "test_criteria": "Visible label words stay in the same order",
+          "rule": "Check that speech users can activate controls using the words they see on screen, ideally at the start of the accessible name.",
+          "description": "What to check: Check that speech users can activate controls using the words they see on screen, ideally at the start of the accessible name. Compliant when speech users can activate controls using the words they see on screen, ideally at the start of the accessible name. Non-compliant when this check applies and the code does not show that speech users can activate controls using the words they see on screen, ideally at the start of the accessible name."
+        },
+        {
+          "test_criteria": "Accessible name contains the visible text label.",
+          "rule": "Check buttons/links/custom controls: ARIA/name includes visible label text.",
+            "description": "What to check: Check whether the accessible name for buttons, links, and custom controls includes the visible label text. Compliant when the accessible name includes the visible label text in the same order users see on screen. Non-compliant when this check applies and the accessible name omits or reorders the visible label text."
+        }
+      ]
+    }
+  ],
+  "Visual Controls": [
+    {
+      "sc_id": "WCAG 2.0 1.4.3 Contrast (Minimum)",
+      "guideline": "WCAG 2.0: 1.4.3",
+      "level": "AA",
+      "description": "Contrast (Minimum) in Visual Controls focuses on whether normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background and text embedded in images meets the same contrast requirements unless an exception applies.",
+      "checks": [
+        {
+          "test_criteria": "Text contrast meets minimum ratio",
+          "rule": "Verify normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background.",
+          "description": "What to check: Verify normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background. Compliant when normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background. Non-compliant when this check applies and the code does not show that normal text reaches at least 4.5:1 contrast and large text reaches at least 3:1 against its background."
+        },
+        {
+          "test_criteria": "Images of text also meet contrast",
+          "rule": "Check that text embedded in images meets the same contrast requirements unless an exception applies.",
+          "description": "What to check: Check that text embedded in images meets the same contrast requirements unless an exception applies. Compliant when text embedded in images meets the same contrast requirements unless an exception applies. Non-compliant when this check applies and the code does not show that text embedded in images meets the same contrast requirements unless an exception applies."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.4.5 Images of Text",
+      "guideline": "WCAG 2.0: 1.4.5",
+      "level": "AA",
+      "description": "Images of Text in Visual Controls focuses on whether images of text are not used where HTML and CSS can present the same information and any remaining images of text are only decorative, essential, or part of a logotype.",
+      "checks": [
+        {
+          "test_criteria": "Real text is used when styling can achieve the result",
+          "rule": "Verify images of text are not used where HTML and CSS can present the same information.",
+           "description": "What to check: Verify images of text are not used where HTML and CSS can present the same information. Compliant when real text is used wherever the same presentation can be achieved with HTML and CSS. Non-compliant when text is presented as an image even though the same presentation could be achieved with real text and CSS."
+        },
+        {
+          "test_criteria": "Exceptions are limited to essential cases",
+          "rule": "Check that any remaining images of text are only decorative, essential, or part of a logotype.",
+          "description": "What to check: Check that any remaining images of text are only decorative, essential, or part of a logotype. Compliant when any remaining images of text are only decorative, essential, or part of a logotype. Non-compliant when this check applies and the code does not show that any remaining images of text are only decorative, essential, or part of a logotype."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.1.1 Non-text Content",
+      "guideline": "WCAG 2.0: 1.1.1",
+      "level": "A",
+      "description": "Non-text Content in Visual Controls focuses on whether each meaningful image, icon, SVG, canvas fallback, image button, and embedded object exposes text that serves the same purpose, decorative images use empty alt text, CSS backgrounds, or aria-hidden so they are ignored by screen readers, and nearby text, linked description, or a data table for charts, diagrams, maps, and other complex non-text content.",
+      "checks": [
+        {
+          "test_criteria": "Meaningful non-text content has an equivalent name",
+          "rule": "Verify each meaningful image, icon, SVG, canvas fallback, image button, and embedded object exposes text that serves the same purpose.",
+          "description": "What to check: Verify each meaningful image, icon, SVG, canvas fallback, image button, and embedded object exposes text that serves the same purpose. Compliant when each meaningful image, icon, SVG, canvas fallback, image button, and embedded object exposes text that serves the same purpose. Non-compliant when this check applies and the code does not show that each meaningful image, icon, SVG, canvas fallback, image button, and embedded object exposes text that serves the same purpose."
+        },
+        {
+          "test_criteria": "Decorative non-text content is hidden from assistive technology",
+          "rule": "Ensure decorative images use empty alt text, CSS backgrounds, or aria-hidden so they are ignored by screen readers.",
+          "description": "What to check: Ensure decorative images use empty alt text, CSS backgrounds, or aria-hidden so they are ignored by screen readers. Compliant when decorative images use empty alt text, CSS backgrounds, or aria-hidden so they are ignored by screen readers. Non-compliant when this check applies and the code does not show that decorative images use empty alt text, CSS backgrounds, or aria-hidden so they are ignored by screen readers."
+        },
+        {
+          "test_criteria": "Complex visuals have a long equivalent",
+          "rule": "Provide nearby text, linked description, or a data table for charts, diagrams, maps, and other complex non-text content.",
+          "description": "What to check: Provide nearby text, linked description, or a data table for charts, diagrams, maps, and other complex non-text content. Compliant when provide nearby text, linked description, or a data table for charts, diagrams, maps, and other complex non-text content. Non-compliant when this check applies and the code does not show that provide nearby text, linked description, or a data table for charts, diagrams, maps, and other complex non-text content."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 1.4.11 Non-text Contrast",
+      "guideline": "WCAG 2.1: 1.4.11 Non-text Contrast 1.4 Distinguishable",
+      "level": "AA",
+      "description": "Non-text Contrast in Visual Controls focuses on whether control boundaries, icons, focus indicators, and meaningful graphical objects have at least 3:1 contrast against adjacent colors and selected, pressed, expanded, and error states are still distinguishable without relying on low-contrast styling.",
+      "checks": [
+        {
+          "test_criteria": "Essential graphics and controls have 3:1 contrast",
+          "rule": "Verify control boundaries, icons, focus indicators, and meaningful graphical objects have at least 3:1 contrast against adjacent colors.",
+          "description": "What to check: Verify control boundaries, icons, focus indicators, and meaningful graphical objects have at least 3:1 contrast against adjacent colors. Compliant when control boundaries, icons, focus indicators, and meaningful graphical objects have at least 3:1 contrast against adjacent colors. Non-compliant when this check applies and the code does not show that control boundaries, icons, focus indicators, and meaningful graphical objects have at least 3:1 contrast against adjacent colors."
+        },
+        {
+          "test_criteria": "State changes remain visually clear",
+          "rule": "Check that selected, pressed, expanded, and error states are still distinguishable without relying on low-contrast styling.",
+          "description": "What to check: Check that selected, pressed, expanded, and error states are still distinguishable without relying on low-contrast styling. Compliant when selected, pressed, expanded, and error states are still distinguishable without relying on low-contrast styling. Non-compliant when this check applies and the code does not show that selected, pressed, expanded, and error states are still distinguishable without relying on low-contrast styling."
+        }
+      ]
+    }
+  ],
+  "Pointer Interactions": [
+    {
+      "sc_id": "WCAG 2.1 2.5.1 Pointer Gestures",
+      "guideline": "WCAG 2.1: 2.5.1 Pointer Gestures 2.5 Input Modalities",
+      "level": "A",
+      "description": "Pointer Gestures in Pointer Interactions focuses on whether multipoint or path-based gestures such as pinch, swipe, or drag drawing also work with a single pointer activation and users can accomplish the same outcome with buttons, menus, or simple taps unless the gesture is essential.",
+      "checks": [
+        {
+          "test_criteria": "Complex gestures have a simple alternative",
+          "rule": "Verify multipoint or path-based gestures such as pinch, swipe, or drag drawing also work with a single pointer activation.",
+          "description": "What to check: Verify multipoint or path-based gestures such as pinch, swipe, or drag drawing also work with a single pointer activation. Compliant when multipoint or path-based gestures such as pinch, swipe, or drag drawing also work with a single pointer activation. Non-compliant when this check applies and the code does not show that multipoint or path-based gestures such as pinch, swipe, or drag drawing also work with a single pointer activation."
+        },
+        {
+          "test_criteria": "Alternative does not require precise gesture memory",
+          "rule": "Check that users can accomplish the same outcome with buttons, menus, or simple taps unless the gesture is essential.",
+          "description": "What to check: Check that users can accomplish the same outcome with buttons, menus, or simple taps unless the gesture is essential. Compliant when users can accomplish the same outcome with buttons, menus, or simple taps unless the gesture is essential. Non-compliant when this check applies and the code does not show that users can accomplish the same outcome with buttons, menus, or simple taps unless the gesture is essential."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 2.5.2 Pointer Cancellation",
+      "guideline": "WCAG 2.1: 2.5.2 Pointer Cancellation 2.5 Input Modalities",
+      "level": "A",
+      "description": "Pointer Cancellation in Pointer Interactions focuses on whether single-pointer actions complete on up-event, or provide a way to abort or undo before completion and users can move away before release without triggering unintended commands.",
+      "checks": [
+        {
+          "test_criteria": "Pointer down does not trigger irreversible action",
+          "rule": "Verify single-pointer actions complete on up-event, or provide a way to abort or undo before completion.",
+          "description": "What to check: Verify single-pointer actions complete on up-event, or provide a way to abort or undo before completion. Compliant when single-pointer actions complete on up-event, or provide a way to abort or undo before completion. Non-compliant when this check applies and the code does not show that single-pointer actions complete on up-event, or provide a way to abort or undo before completion."
+        },
+        {
+          "test_criteria": "Accidental activations are minimized",
+          "rule": "Check that users can move away before release without triggering unintended commands.",
+          "description": "What to check: Check that users can move away before release without triggering unintended commands. Compliant when users can move away before release without triggering unintended commands. Non-compliant when this check applies and the code does not show that users can move away before release without triggering unintended commands."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.1 2.5.4 Motion Actuation",
+      "guideline": "WCAG 2.1: 2.5.4 Motion Actuation 2.5 Input Modalities",
+      "level": "A",
+      "description": "Motion Actuation in Pointer Interactions focuses on whether actions triggered by shaking, tilting, or moving the device can also be performed with on-screen controls and accidental motion input can be turned off unless the motion is essential to the function.",
+      "checks": [
+        {
+          "test_criteria": "Motion-actuated functions have UI alternatives",
+          "rule": "Verify actions triggered by shaking, tilting, or moving the device can also be performed with on-screen controls.",
+          "description": "What to check: Verify actions triggered by shaking, tilting, or moving the device can also be performed with on-screen controls. Compliant when actions triggered by shaking, tilting, or moving the device can also be performed with on-screen controls. Non-compliant when this check applies and the code does not show that actions triggered by shaking, tilting, or moving the device can also be performed with on-screen controls."
+        },
+        {
+          "test_criteria": "Motion response can be disabled",
+          "rule": "Check that accidental motion input can be turned off unless the motion is essential to the function.",
+          "description": "What to check: Check that accidental motion input can be turned off unless the motion is essential to the function. Compliant when accidental motion input can be turned off unless the motion is essential to the function. Non-compliant when this check applies and the code does not show that accidental motion input can be turned off unless the motion is essential to the function."
+        },
+        {
+          "test_criteria": "Motion-based functionality is disable-able and has user-interface alternatives.",
+          "rule": "Disable motion sensors or provide on-screen controls to perform the same actions.",
+          "description": "What to check: Disable motion sensors or provide on-screen controls to perform the same actions. Compliant when disable motion sensors or provide on-screen controls to perform the same actions. Non-compliant when this check applies and the code does not show that disable motion sensors or provide on-screen controls to perform the same actions."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.2 2.5.7 Dragging Movements",
+      "guideline": "WCAG 2.2: 2.5.7 Dragging Movements 2.5 Input Modalities",
+      "level": "AA",
+      "description": "Dragging Movements in Pointer Interactions focuses on whether drag-and-drop actions can also be completed with a single pointer action such as tapping buttons or selecting menu commands and reordering, moving, and positioning tasks can be completed without continuous dragging unless dragging is essential.",
+      "checks": [
+        {
+          "test_criteria": "Dragging has a non-drag alternative",
+          "rule": "Verify drag-and-drop actions can also be completed with a single pointer action such as tapping buttons or selecting menu commands.",
+          "description": "What to check: Verify drag-and-drop actions can also be completed with a single pointer action such as tapping buttons or selecting menu commands. Compliant when drag-and-drop actions can also be completed with a single pointer action such as tapping buttons or selecting menu commands. Non-compliant when this check applies and the code does not show that drag-and-drop actions can also be completed with a single pointer action such as tapping buttons or selecting menu commands."
+        },
+        {
+          "test_criteria": "Alternative reaches the same result",
+          "rule": "Check that reordering, moving, and positioning tasks can be completed without continuous dragging unless dragging is essential.",
+          "description": "What to check: Check that reordering, moving, and positioning tasks can be completed without continuous dragging unless dragging is essential. Compliant when reordering, moving, and positioning tasks can be completed without continuous dragging unless dragging is essential. Non-compliant when this check applies and the code does not show that reordering, moving, and positioning tasks can be completed without continuous dragging unless dragging is essential."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.2 2.5.8 Target Size (Minimum)",
+      "guideline": "WCAG 2.2: 2.5.8 Target Size (Minimum) 2.5 Input Modalities",
+      "level": "AA",
+      "description": "Target Size (Minimum) in Pointer Interactions focuses on whether targets meet the minimum 24 by 24 CSS pixel size or spacing requirement unless an allowed exception applies and smaller controls have enough separation so a 24 pixel circle around each target does not overlap.",
+      "checks": [
+        {
+          "test_criteria": "Pointer targets are at least 24 by 24 CSS pixels",
+          "rule": "Verify targets meet the minimum 24 by 24 CSS pixel size or spacing requirement unless an allowed exception applies.",
+          "description": "What to check: Verify targets meet the minimum 24 by 24 CSS pixel size or spacing requirement unless an allowed exception applies. Compliant when targets meet the minimum 24 by 24 CSS pixel size or spacing requirement unless an allowed exception applies. Non-compliant when this check applies and the code does not show that targets meet the minimum 24 by 24 CSS pixel size or spacing requirement unless an allowed exception applies."
+        },
+        {
+          "test_criteria": "Spacing avoids accidental activation",
+          "rule": "Check that smaller controls have enough separation so a 24 pixel circle around each target does not overlap.",
+          "description": "What to check: Check that smaller controls have enough separation so a 24 pixel circle around each target does not overlap. Compliant when smaller controls have enough separation so a 24 pixel circle around each target does not overlap. Non-compliant when this check applies and the code does not show that smaller controls have enough separation so a 24 pixel circle around each target does not overlap."
+        }
+      ]
+    }
+  ],
+  "Dynamic Components": [
+    {
+      "sc_id": "WCAG 2.0 2.2.2 Pause, Stop, Hide",
+      "guideline": "WCAG 2.0: 2.2.2",
+      "level": "A",
+      "description": "Pause, Stop, Hide in Dynamic Components focuses on whether moving, blinking, scrolling, or auto-updating content can be paused, stopped, or hidden when it starts automatically and lasts more than 5 seconds and pause or stop controls are keyboard accessible and remain available while the content is present.",
+      "checks": [
+        {
+          "test_criteria": "Moving or auto-updating content can be controlled",
+          "rule": "Verify moving, blinking, scrolling, or auto-updating content can be paused, stopped, or hidden when it starts automatically and lasts more than 5 seconds.",
+          "description": "What to check: Verify moving, blinking, scrolling, or auto-updating content can be paused, stopped, or hidden when it starts automatically and lasts more than 5 seconds. Compliant when moving, blinking, scrolling, or auto-updating content can be paused, stopped, or hidden when it starts automatically and lasts more than 5 seconds. Non-compliant when this check applies and the code does not show that moving, blinking, scrolling, or auto-updating content can be paused, stopped, or hidden when it starts automatically and lasts more than 5 seconds."
+        },
+        {
+          "test_criteria": "Controls for motion are easy to find",
+          "rule": "Check that pause or stop controls are keyboard accessible and remain available while the content is present.",
+          "description": "What to check: Check that pause or stop controls are keyboard accessible and remain available while the content is present. Compliant when pause or stop controls are keyboard accessible and remain available while the content is present. Non-compliant when this check applies and the code does not show that pause or stop controls are keyboard accessible and remain available while the content is present."
+        }
+      ]
+    }
+  ],
+  "Links": [
+    {
+      "sc_id": "WCAG 2.0 2.1.1 Keyboard",
+      "guideline": "WCAG2.0:2.1.1",
+      "level": "A",
+      "description": "Keyboard in Links focuses on whether every control, link, menu, dialog, and custom widget can be operated with a keyboard interface and drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent.",
+      "checks": [
+        {
+          "test_criteria": "All functionality works from the keyboard",
+          "rule": "Verify every control, link, menu, dialog, and custom widget can be operated with a keyboard interface.",
+          "description": "What to check: Verify every control, link, menu, dialog, and custom widget can be operated with a keyboard interface. Compliant when every control, link, menu, dialog, and custom widget can be operated with a keyboard interface. Non-compliant when this check applies and the code does not show that every control, link, menu, dialog, and custom widget can be operated with a keyboard interface."
+        },
+        {
+          "test_criteria": "No pointer-only interaction is required",
+          "rule": "Check that drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent.",
+          "description": "What to check: Check that drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent. Compliant when drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent. Non-compliant when this check applies and the code does not show that drag handles, hover menus, and scripted controls provide a keyboard equivalent unless the underlying function is path-dependent."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.3.1 Info and Relationships",
+      "guideline": "WCAG 2.0: 1.3.1\nLink :Markup structure using semantic elements",
+      "level": "A",
+      "description": "Info and Relationships in Links focuses on whether headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA, relationships shown visually by position, indentation, or styling are also available in markup or text, and labels, legends, captions, and table headers are correctly associated with the controls or data they describe.",
+      "checks": [
+        {
+          "test_criteria": "Structure is programmatically exposed",
+          "rule": "Verify headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA.",
+          "description": "What to check: Verify headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA. Compliant when headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA. Non-compliant when this check applies and the code does not show that headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA."
+        },
+        {
+          "test_criteria": "Instructions are not conveyed by layout alone",
+          "rule": "Check that relationships shown visually by position, indentation, or styling are also available in markup or text.",
+          "description": "What to check: Check that relationships shown visually by position, indentation, or styling are also available in markup or text. Compliant when relationships shown visually by position, indentation, or styling are also available in markup or text. Non-compliant when this check applies and the code does not show that relationships shown visually by position, indentation, or styling are also available in markup or text."
+        },
+        {
+          "test_criteria": "Controls are associated with their names and groups",
+          "rule": "Ensure labels, legends, captions, and table headers are correctly associated with the controls or data they describe.",
+          "description": "What to check: Ensure labels, legends, captions, and table headers are correctly associated with the controls or data they describe. Compliant when labels, legends, captions, and table headers are correctly associated with the controls or data they describe. Non-compliant when this check applies and the code does not show that labels, legends, captions, and table headers are correctly associated with the controls or data they describe."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 2.4.4 Link Purpose (In Context)",
+      "guideline": "WCAG 2.0: 2.4.4 Link Context (In Context)",
+      "level": "A",
+      "description": "Link Purpose (In Context) in Links focuses on whether link text alone, or link text plus programmatically associated context, makes the destination or action clear and repeated labels such as Read more, Learn more, or Click here have enough surrounding context to distinguish them.",
+      "checks": [
+        {
+          "test_criteria": "Link purpose is clear in context",
+          "rule": "Verify link text alone, or link text plus programmatically associated context, makes the destination or action clear.",
+          "description": "What to check: Verify link text alone, or link text plus programmatically associated context, makes the destination or action clear. Compliant when link text alone, or link text plus programmatically associated context, makes the destination or action clear. Non-compliant when this check applies and the code does not show that link text alone, or link text plus programmatically associated context, makes the destination or action clear."
+        },
+        {
+          "test_criteria": "Ambiguous link labels are clarified",
+          "rule": "Check that repeated labels such as Read more, Learn more, or Click here have enough surrounding context to distinguish them.",
+          "description": "What to check: Check that repeated labels such as Read more, Learn more, or Click here have enough surrounding context to distinguish them. Compliant when repeated labels such as Read more, Learn more, or Click here have enough surrounding context to distinguish them. Non-compliant when this check applies and the code does not show that repeated labels such as Read more, Learn more, or Click here have enough surrounding context to distinguish them."
+        }
+      ]
+    }
+  ],
+  "Tables": [
+    {
+      "sc_id": "WCAG 2.0 1.3.1 Info and Relationships",
+      "guideline": "WCAG 2.0 1.3.1 Info and Relationships:",
+      "level": "A",
+      "description": "Info and Relationships in Tables focuses on whether headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA, relationships shown visually by position, indentation, or styling are also available in markup or text, and labels, legends, captions, and table headers are correctly associated with the controls or data they describe.",
+      "checks": [
+        {
+          "test_criteria": "Structure is programmatically exposed",
+          "rule": "Verify headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA.",
+          "description": "What to check: Verify headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA. Compliant when headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA. Non-compliant when this check applies and the code does not show that headings, lists, tables, form labels, groups, and relationships are coded with semantic HTML or equivalent ARIA."
+        },
+        {
+          "test_criteria": "Instructions are not conveyed by layout alone",
+          "rule": "Check that relationships shown visually by position, indentation, or styling are also available in markup or text.",
+          "description": "What to check: Check that relationships shown visually by position, indentation, or styling are also available in markup or text. Compliant when relationships shown visually by position, indentation, or styling are also available in markup or text. Non-compliant when this check applies and the code does not show that relationships shown visually by position, indentation, or styling are also available in markup or text."
+        },
+        {
+          "test_criteria": "Controls are associated with their names and groups",
+          "rule": "Ensure labels, legends, captions, and table headers are correctly associated with the controls or data they describe.",
+          "description": "What to check: Ensure labels, legends, captions, and table headers are correctly associated with the controls or data they describe. Compliant when labels, legends, captions, and table headers are correctly associated with the controls or data they describe. Non-compliant when this check applies and the code does not show that labels, legends, captions, and table headers are correctly associated with the controls or data they describe."
+        }
+      ]
+    }
+  ],
+  "Timing and Seizures": [
+    {
+      "sc_id": "WCAG 2.0 2.2.1 Timing Adjustable",
+      "guideline": "WCAG 2.0 2.2.1: Timing Adjustable",
+      "level": "A",
+      "description": "Timing Adjustable in Timing and Seizures focuses on whether user-set time limits can be disabled, adjusted, or extended unless a listed exception applies and users are warned before session expiry and can request more time without losing work.",
+      "checks": [
+        {
+          "test_criteria": "Time limits can be turned off, adjusted, or extended",
+          "rule": "Verify user-set time limits can be disabled, adjusted, or extended unless a listed exception applies.",
+          "description": "What to check: Verify user-set time limits can be disabled, adjusted, or extended unless a listed exception applies. Compliant when user-set time limits can be disabled, adjusted, or extended unless a listed exception applies. Non-compliant when this check applies and the code does not show that user-set time limits can be disabled, adjusted, or extended unless a listed exception applies."
+        },
+        {
+          "test_criteria": "Timeout warnings are actionable",
+          "rule": "Check that users are warned before session expiry and can request more time without losing work.",
+          "description": "What to check: Check that users are warned before session expiry and can request more time without losing work. Compliant when users are warned before session expiry and can request more time without losing work. Non-compliant when this check applies and the code does not show that users are warned before session expiry and can request more time without losing work."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 2.2.2 Pause, Stop, Hide",
+      "guideline": "WCAG  2.2.2: Pause, Stop, Hide",
+      "level": "A",
+      "description": "Pause, Stop, Hide in Timing and Seizures focuses on whether moving, blinking, scrolling, or auto-updating content can be paused, stopped, or hidden when it starts automatically and lasts more than 5 seconds and pause or stop controls are keyboard accessible and remain available while the content is present.",
+      "checks": [
+        {
+          "test_criteria": "Moving or auto-updating content can be controlled",
+          "rule": "Verify moving, blinking, scrolling, or auto-updating content can be paused, stopped, or hidden when it starts automatically and lasts more than 5 seconds.",
+          "description": "What to check: Verify moving, blinking, scrolling, or auto-updating content can be paused, stopped, or hidden when it starts automatically and lasts more than 5 seconds. Compliant when moving, blinking, scrolling, or auto-updating content can be paused, stopped, or hidden when it starts automatically and lasts more than 5 seconds. Non-compliant when this check applies and the code does not show that moving, blinking, scrolling, or auto-updating content can be paused, stopped, or hidden when it starts automatically and lasts more than 5 seconds."
+        },
+        {
+          "test_criteria": "Controls for motion are easy to find",
+          "rule": "Check that pause or stop controls are keyboard accessible and remain available while the content is present.",
+          "description": "What to check: Check that pause or stop controls are keyboard accessible and remain available while the content is present. Compliant when pause or stop controls are keyboard accessible and remain available while the content is present. Non-compliant when this check applies and the code does not show that pause or stop controls are keyboard accessible and remain available while the content is present."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 2.3.1 Three Flashes or Below Threshold",
+      "guideline": "WCAG 2.0  2.3.1: Three Flashes or Below Threshold (Level A)",
+      "level": "A",
+      "description": "Three Flashes or Below Threshold in Timing and Seizures focuses on whether the page does not contain content that flashes more than three times per second unless it is below the general and red flash thresholds and videos, ads, carousels, and scripted effects for flashing patterns that could trigger seizures.",
+      "checks": [
+        {
+          "test_criteria": "Content does not flash more than the threshold",
+          "rule": "Verify the page does not contain content that flashes more than three times per second unless it is below the general and red flash thresholds.",
+          "description": "What to check: Verify the page does not contain content that flashes more than three times per second unless it is below the general and red flash thresholds. Compliant when the page does not contain content that flashes more than three times per second unless it is below the general and red flash thresholds. Non-compliant when this check applies and the code does not show that the page does not contain content that flashes more than three times per second unless it is below the general and red flash thresholds."
+        },
+        {
+          "test_criteria": "Animations and media are screened for seizure risk",
+          "rule": "Check videos, ads, carousels, and scripted effects for flashing patterns that could trigger seizures.",
+            "description": "What to check: Review videos, ads, carousels, and scripted effects for flashing patterns that could trigger seizures. Compliant when videos, ads, carousels, and scripted effects do not introduce flashing that exceeds the general or red flash thresholds. Non-compliant when flashing content exceeds the general or red flash thresholds and could trigger seizures."
+        }
+      ]
+    }
+  ],
+  "Navigation": [
+    {
+      "sc_id": "WCAG 2.0 2.4.1 Bypass Blocks",
+      "guideline": "WCAG 2.0 2.4.1: Bypass Blocks",
+      "level": "A",
+      "description": "Bypass Blocks in Navigation focuses on whether there is a skip link, landmark navigation, or equivalent mechanism to bypass repeated content and the bypass mechanism is keyboard reachable, visible on focus when needed, and lands on the correct destination.",
+      "checks": [
+        {
+          "test_criteria": "Repeated blocks can be skipped",
+          "rule": "Verify there is a skip link, landmark navigation, or equivalent mechanism to bypass repeated content.",
+          "description": "What to check: Verify there is a skip link, landmark navigation, or equivalent mechanism to bypass repeated content. Compliant when there is a skip link, landmark navigation, or equivalent mechanism to bypass repeated content. Non-compliant when this check applies and the code does not show that there is a skip link, landmark navigation, or equivalent mechanism to bypass repeated content."
+        },
+        {
+          "test_criteria": "Skip mechanisms work from the keyboard",
+          "rule": "Check that the bypass mechanism is keyboard reachable, visible on focus when needed, and lands on the correct destination.",
+          "description": "What to check: Check that the bypass mechanism is keyboard reachable, visible on focus when needed, and lands on the correct destination. Compliant when the bypass mechanism is keyboard reachable, visible on focus when needed, and lands on the correct destination. Non-compliant when this check applies and the code does not show that the bypass mechanism is keyboard reachable, visible on focus when needed, and lands on the correct destination."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.3.2 Meaningful Sequence",
+      "guideline": "WCAG 2.0 1.3.2: Meaningful Sequence",
+      "level": "A",
+      "description": "Meaningful Sequence in Navigation focuses on whether the DOM order and focus order present content in a sequence that still makes sense without CSS positioning and forms, dialogs, and step-based content remain understandable when read or tabbed through sequentially.",
+      "checks": [
+        {
+          "test_criteria": "Reading order preserves meaning",
+          "rule": "Verify the DOM order and focus order present content in a sequence that still makes sense without CSS positioning.",
+          "description": "What to check: Verify the DOM order and focus order present content in a sequence that still makes sense without CSS positioning. Compliant when the DOM order and focus order present content in a sequence that still makes sense without CSS positioning. Non-compliant when this check applies and the code does not show that the DOM order and focus order present content in a sequence that still makes sense without CSS positioning."
+        },
+        {
+          "test_criteria": "Instructions still work in linearized order",
+          "rule": "Check that forms, dialogs, and step-based content remain understandable when read or tabbed through sequentially.",
+          "description": "What to check: Check that forms, dialogs, and step-based content remain understandable when read or tabbed through sequentially. Compliant when forms, dialogs, and step-based content remain understandable when read or tabbed through sequentially. Non-compliant when this check applies and the code does not show that forms, dialogs, and step-based content remain understandable when read or tabbed through sequentially."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 2.4.5 Multiple Ways",
+      "guideline": "WCAG 2.0 2.4.5: Multiple Ways",
+      "level": "AA",
+      "description": "Multiple Ways in Navigation focuses on whether users can locate pages through at least two methods such as search, site map, navigation menu, breadcrumb, or page list unless in a process flow and search, navigation, and hierarchical links are not hidden behind the same single path.",
+      "checks": [
+        {
+          "test_criteria": "More than one navigation method exists",
+          "rule": "Verify users can locate pages through at least two methods such as search, site map, navigation menu, breadcrumb, or page list unless in a process flow.",
+          "description": "What to check: Verify users can locate pages through at least two methods such as search, site map, navigation menu, breadcrumb, or page list unless in a process flow. Compliant when users can locate pages through at least two methods such as search, site map, navigation menu, breadcrumb, or page list unless in a process flow. Non-compliant when this check applies and the code does not show that users can locate pages through at least two methods such as search, site map, navigation menu, breadcrumb, or page list unless in a process flow."
+        },
+        {
+          "test_criteria": "Alternative find paths remain available",
+          "rule": "Check that search, navigation, and hierarchical links are not hidden behind the same single path.",
+          "description": "What to check: Check that search, navigation, and hierarchical links are not hidden behind the same single path. Compliant when search, navigation, and hierarchical links are not hidden behind the same single path. Non-compliant when this check applies and the code does not show that search, navigation, and hierarchical links are not hidden behind the same single path."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 3.2.3 Consistent Navigation",
+      "guideline": "WCAG 2.0 3.2.3: Consistent Navigation",
+      "level": "AA",
+      "description": "Consistent Navigation in Navigation focuses on whether repeated menus, search, breadcrumb trails, and other navigational mechanisms appear in the same relative order across pages in a set and any navigation order change is caused by a user customization or user-initiated view change.",
+      "checks": [
+        {
+          "test_criteria": "Repeated navigation is in a consistent order",
+          "rule": "Verify repeated menus, search, breadcrumb trails, and other navigational mechanisms appear in the same relative order across pages in a set.",
+          "description": "What to check: Verify repeated menus, search, breadcrumb trails, and other navigational mechanisms appear in the same relative order across pages in a set. Compliant when repeated menus, search, breadcrumb trails, and other navigational mechanisms appear in the same relative order across pages in a set. Non-compliant when this check applies and the code does not show that repeated menus, search, breadcrumb trails, and other navigational mechanisms appear in the same relative order across pages in a set."
+        },
+        {
+          "test_criteria": "User-initiated reordering is the only exception",
+          "rule": "Check that any navigation order change is caused by a user customization or user-initiated view change.",
+          "description": "What to check: Check that any navigation order change is caused by a user customization or user-initiated view change. Compliant when any navigation order change is caused by a user customization or user-initiated view change. Non-compliant when this check applies and the code does not show that any navigation order change is caused by a user customization or user-initiated view change."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 3.2.4 Consistent Identification",
+      "guideline": "WCAG 2.0 3.2.4: Consistent Identification",
+      "level": "AA",
+      "description": "Consistent Identification in Navigation focuses on whether controls that perform the same function use consistent names, icons, and labels across the site or product area and add-to-cart, help, search, or close actions are not renamed unpredictably between pages.",
+      "checks": [
+        {
+          "test_criteria": "Same functions are identified consistently",
+          "rule": "Verify controls that perform the same function use consistent names, icons, and labels across the site or product area.",
+          "description": "What to check: Verify controls that perform the same function use consistent names, icons, and labels across the site or product area. Compliant when controls that perform the same function use consistent names, icons, and labels across the site or product area. Non-compliant when this check applies and the code does not show that controls that perform the same function use consistent names, icons, and labels across the site or product area."
+        },
+        {
+          "test_criteria": "Equivalent components stay recognizable",
+          "rule": "Check that add-to-cart, help, search, or close actions are not renamed unpredictably between pages.",
+          "description": "What to check: Check that add-to-cart, help, search, or close actions are not renamed unpredictably between pages. Compliant when add-to-cart, help, search, or close actions are not renamed unpredictably between pages. Non-compliant when this check applies and the code does not show that add-to-cart, help, search, or close actions are not renamed unpredictably between pages."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.2 3.2.6 Consistent Help",
+      "guideline": "WCAG 2.2: 3.2.6 Consistent Help 3.2 Predictable",
+      "level": "A",
+      "description": "Consistent Help in Navigation focuses on whether help links, phone numbers, chat, contact forms, FAQs, or other repeated help mechanisms stay in the same relative order across pages in the same set and consistency across the same breakpoint, zoom, and orientation, allowing changes only when the user initiates the layout change.",
+      "checks": [
+        {
+          "test_criteria": "Help mechanisms stay in a consistent place",
+          "rule": "Verify help links, phone numbers, chat, contact forms, FAQs, or other repeated help mechanisms stay in the same relative order across pages in the same set.",
+          "description": "What to check: Verify help links, phone numbers, chat, contact forms, FAQs, or other repeated help mechanisms stay in the same relative order across pages in the same set. Compliant when help links, phone numbers, chat, contact forms, FAQs, or other repeated help mechanisms stay in the same relative order across pages in the same set. Non-compliant when this check applies and the code does not show that help links, phone numbers, chat, contact forms, FAQs, or other repeated help mechanisms stay in the same relative order across pages in the same set."
+        },
+        {
+          "test_criteria": "Consistency is checked per page variation",
+          "rule": "Check consistency across the same breakpoint, zoom, and orientation, allowing changes only when the user initiates the layout change.",
+          "description": "What to check: Check consistency across the same breakpoint, zoom, and orientation, allowing changes only when the user initiates the layout change. Compliant when repeated help mechanisms stay in a consistent relative order across the same breakpoint, zoom, and orientation unless the user initiates the change. Non-compliant when repeated help mechanisms move or reorder across equivalent page states without user initiation."
+        }
+      ]
+    }
+  ],
+  "Media": [
+    {
+      "sc_id": "WCAG 2.0 1.2.1 Audio-only and Video-only (Prerecorded)",
+      "guideline": "WCAG 2.0: 1.2.1",
+      "level": "A",
+      "description": "Audio-only and Video-only (Prerecorded) in Media focuses on whether prerecorded audio-only media has a transcript or equivalent text alternative and prerecorded video-only media has an audio track or text alternative describing the important visual information.",
+      "checks": [
+        {
+          "test_criteria": "Audio-only content has a text alternative",
+          "rule": "Check that prerecorded audio-only media has a transcript or equivalent text alternative.",
+          "description": "What to check: Check that prerecorded audio-only media has a transcript or equivalent text alternative. Compliant when prerecorded audio-only media has a transcript or equivalent text alternative. Non-compliant when this check applies and the code does not show that prerecorded audio-only media has a transcript or equivalent text alternative."
+        },
+        {
+          "test_criteria": "Video-only content has an equivalent alternative",
+          "rule": "Check that prerecorded video-only media has an audio track or text alternative describing the important visual information.",
+          "description": "What to check: Check that prerecorded video-only media has an audio track or text alternative describing the important visual information. Compliant when prerecorded video-only media has an audio track or text alternative describing the important visual information. Non-compliant when this check applies and the code does not show that prerecorded video-only media has an audio track or text alternative describing the important visual information."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.2.2 Captions (Prerecorded)",
+      "guideline": "WCAG 2.0 1.2.2",
+      "level": "A",
+      "description": "Captions (Prerecorded) in Media focuses on whether prerecorded video with audio provides synchronized captions for speech and meaningful sounds and captions include speaker changes, relevant sound effects, and match the spoken content.",
+      "checks": [
+        {
+          "test_criteria": "Prerecorded synchronized media includes captions",
+          "rule": "Verify prerecorded video with audio provides synchronized captions for speech and meaningful sounds.",
+          "description": "What to check: Verify prerecorded video with audio provides synchronized captions for speech and meaningful sounds. Compliant when prerecorded video with audio provides synchronized captions for speech and meaningful sounds. Non-compliant when this check applies and the code does not show that prerecorded video with audio provides synchronized captions for speech and meaningful sounds."
+        },
+        {
+          "test_criteria": "Captions are complete and equivalent",
+          "rule": "Check that captions include speaker changes, relevant sound effects, and match the spoken content.",
+          "description": "What to check: Check that captions include speaker changes, relevant sound effects, and match the spoken content. Compliant when captions include speaker changes, relevant sound effects, and match the spoken content. Non-compliant when this check applies and the code does not show that captions include speaker changes, relevant sound effects, and match the spoken content."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.2.3 Audio Description or Media Alternative (Prerecorded)",
+      "guideline": "WCAG 2.0: 1.2.3",
+      "level": "A",
+      "description": "Audio Description or Media Alternative (Prerecorded) in Media focuses on whether synchronized media provides audio description or a full text alternative for important visual information and actions, scene changes, and on-screen text needed for understanding are included in the description or transcript.",
+      "checks": [
+        {
+          "test_criteria": "Prerecorded video has audio description or media alternative",
+          "rule": "Verify synchronized media provides audio description or a full text alternative for important visual information.",
+          "description": "What to check: Verify synchronized media provides audio description or a full text alternative for important visual information. Compliant when synchronized media provides audio description or a full text alternative for important visual information. Non-compliant when this check applies and the code does not show that synchronized media provides audio description or a full text alternative for important visual information."
+        },
+        {
+          "test_criteria": "Alternative covers visual-only meaning",
+          "rule": "Check that actions, scene changes, and on-screen text needed for understanding are included in the description or transcript.",
+          "description": "What to check: Check that actions, scene changes, and on-screen text needed for understanding are included in the description or transcript. Compliant when actions, scene changes, and on-screen text needed for understanding are included in the description or transcript. Non-compliant when this check applies and the code does not show that actions, scene changes, and on-screen text needed for understanding are included in the description or transcript."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.2.4 Captions (Live)",
+      "guideline": "WCAG 2.0: 1.2.4",
+      "level": "AA",
+      "description": "Captions (Live) in Media focuses on whether live video with audio provides captions during the live event and captions are timely enough to follow the speaker and include meaningful non-speech audio when possible.",
+      "checks": [
+        {
+          "test_criteria": "Live synchronized media includes captions",
+          "rule": "Verify live video with audio provides captions during the live event.",
+          "description": "What to check: Verify live video with audio provides captions during the live event. Compliant when live video with audio provides captions during the live event. Non-compliant when this check applies and the code does not show that live video with audio provides captions during the live event."
+        },
+        {
+          "test_criteria": "Live captions remain understandable",
+          "rule": "Check that captions are timely enough to follow the speaker and include meaningful non-speech audio when possible.",
+          "description": "What to check: Check that captions are timely enough to follow the speaker and include meaningful non-speech audio when possible. Compliant when captions are timely enough to follow the speaker and include meaningful non-speech audio when possible. Non-compliant when this check applies and the code does not show that captions are timely enough to follow the speaker and include meaningful non-speech audio when possible."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.2.5 Audio Description (Prerecorded)",
+      "guideline": "WCAG 2.0 1.2.5",
+      "level": "AA",
+      "description": "Audio Description (Prerecorded) in Media focuses on whether prerecorded video provides an audio description track when visual details are needed to understand the content and the audio description communicates scene changes, gestures, and text shown only visually.",
+      "checks": [
+        {
+          "test_criteria": "Prerecorded synchronized media includes audio description",
+          "rule": "Verify prerecorded video provides an audio description track when visual details are needed to understand the content.",
+          "description": "What to check: Verify prerecorded video provides an audio description track when visual details are needed to understand the content. Compliant when prerecorded video provides an audio description track when visual details are needed to understand the content. Non-compliant when this check applies and the code does not show that prerecorded video provides an audio description track when visual details are needed to understand the content."
+        },
+        {
+          "test_criteria": "Description covers key visual events",
+          "rule": "Check that the audio description communicates scene changes, gestures, and text shown only visually.",
+          "description": "What to check: Check that the audio description communicates scene changes, gestures, and text shown only visually. Compliant when the audio description communicates scene changes, gestures, and text shown only visually. Non-compliant when this check applies and the code does not show that the audio description communicates scene changes, gestures, and text shown only visually."
+        }
+      ]
+    },
+    {
+      "sc_id": "WCAG 2.0 1.4.2 Audio Control",
+      "guideline": "WCAG 2.0: 1.4.2",
+      "level": "A",
+      "description": "Audio Control in Media focuses on whether if audio plays automatically for more than 3 seconds, verify there is a mechanism to pause or stop it and users can control playback volume without relying only on the system volume setting.",
+      "checks": [
+        {
+          "test_criteria": "Autoplay audio can be paused or stopped",
+          "rule": "If audio plays automatically for more than 3 seconds, verify there is a mechanism to pause or stop it.",
+          "description": "What to check: If audio plays automatically for more than 3 seconds, verify there is a mechanism to pause or stop it. Compliant when audio plays automatically for more than 3 seconds, verify there is a mechanism to pause or stop it. Non-compliant when this check applies and the code does not show that audio plays automatically for more than 3 seconds, verify there is a mechanism to pause or stop it."
+        },
+        {
+          "test_criteria": "Volume can be controlled independently",
+          "rule": "Check that users can control playback volume without relying only on the system volume setting.",
+          "description": "What to check: Check that users can control playback volume without relying only on the system volume setting. Compliant when users can control playback volume without relying only on the system volume setting. Non-compliant when this check applies and the code does not show that users can control playback volume without relying only on the system volume setting."
+        }
+      ]
+    }
+  ],
+  "Embedded Objects": [
+    {
+      "sc_id": "WCAG 2.0 1.1.1 Non-text Content",
+      "guideline": "1.1.1",
+      "level": "A",
+      "description": "Non-text Content in Embedded Objects focuses on whether each meaningful image, icon, SVG, canvas fallback, image button, and embedded object exposes text that serves the same purpose, decorative images use empty alt text, CSS backgrounds, or aria-hidden so they are ignored by screen readers, and nearby text, linked description, or a data table for charts, diagrams, maps, and other complex non-text content.",
+      "checks": [
+        {
+          "test_criteria": "Meaningful non-text content has an equivalent name",
+          "rule": "Verify each meaningful image, icon, SVG, canvas fallback, image button, and embedded object exposes text that serves the same purpose.",
+          "description": "What to check: Verify each meaningful image, icon, SVG, canvas fallback, image button, and embedded object exposes text that serves the same purpose. Compliant when each meaningful image, icon, SVG, canvas fallback, image button, and embedded object exposes text that serves the same purpose. Non-compliant when this check applies and the code does not show that each meaningful image, icon, SVG, canvas fallback, image button, and embedded object exposes text that serves the same purpose."
+        },
+        {
+          "test_criteria": "Decorative non-text content is hidden from assistive technology",
+          "rule": "Ensure decorative images use empty alt text, CSS backgrounds, or aria-hidden so they are ignored by screen readers.",
+          "description": "What to check: Ensure decorative images use empty alt text, CSS backgrounds, or aria-hidden so they are ignored by screen readers. Compliant when decorative images use empty alt text, CSS backgrounds, or aria-hidden so they are ignored by screen readers. Non-compliant when this check applies and the code does not show that decorative images use empty alt text, CSS backgrounds, or aria-hidden so they are ignored by screen readers."
+        },
+        {
+          "test_criteria": "Complex visuals have a long equivalent",
+          "rule": "Provide nearby text, linked description, or a data table for charts, diagrams, maps, and other complex non-text content.",
+          "description": "What to check: Provide nearby text, linked description, or a data table for charts, diagrams, maps, and other complex non-text content. Compliant when provide nearby text, linked description, or a data table for charts, diagrams, maps, and other complex non-text content. Non-compliant when this check applies and the code does not show that provide nearby text, linked description, or a data table for charts, diagrams, maps, and other complex non-text content."
+        }
+      ]
+    }
+  ]
+}
