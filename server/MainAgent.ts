@@ -1,4 +1,5 @@
 import { EventEmitter } from "events";
+import * as crypto from "crypto";
 import * as fs from "fs";
 import * as path from "path";
 import { LLMClient } from "./LLMClient";
@@ -7,10 +8,10 @@ import {
   upsertProject,
   upsertFile,
   updateFileStatus,
+  setFileHash,
   markFileRuntimeAnalyzed,
   hasFileRuntimeAnalysis,
-  clearProjectRuntimeAnalysis,
-  clearProjectLlmAuditResults,
+  clearRuntimeAnalysisForFiles,
   insertAuditResult,
   getAuditResultsBySource,
   upsertApplicableGuideline,
@@ -18,6 +19,7 @@ import {
   getFailedGuidelines,
   getIgnoredGuidelines,
   getFileId,
+  clearAuditResultsForFiles,
 } from "./db";
 import {
   ContrastIssue,
@@ -68,6 +70,10 @@ export class MainAgent extends EventEmitter {
 
   get currentState(): AgentState {
     return this.state;
+  }
+
+  private hashFileContent(content: string): string {
+    return crypto.createHash("sha256").update(content, "utf8").digest("hex");
   }
 
   /* ── Helper: push an event to the consumer ─────────────────────── */
@@ -551,12 +557,14 @@ export class MainAgent extends EventEmitter {
       "Applying scoped guideline mapping to the selected files.",
     ]);
 
-    clearProjectRuntimeAnalysis(this.projectId);
+    const targetFileIds = this.todoList.map((todo) => upsertFile(this.projectId, todo.file));
+
+    clearRuntimeAnalysisForFiles(targetFileIds);
     this.contrastIssues = [];
     this.pendingRuntimeResults = [];
 
-    for (const todo of this.todoList) {
-      const fileId = upsertFile(this.projectId, todo.file);
+    for (let index = 0; index < this.todoList.length; index++) {
+      const fileId = targetFileIds[index];
       markFileRuntimeAnalyzed(fileId, true);
     }
 
@@ -688,7 +696,11 @@ export class MainAgent extends EventEmitter {
     const total = this.todoList.length;
     let processed = 0;
 
-    clearProjectLlmAuditResults(this.projectId);
+    const targetFileIds = this.todoList
+      .map((todo) => getFileId(this.projectId, todo.file))
+      .filter((fileId): fileId is number => typeof fileId === "number");
+
+    clearAuditResultsForFiles(targetFileIds, "llm");
 
     this.pushPhaseStatus("audit", total > 0 ? "analyzing" : "done", total > 0 ? "Starting file audit" : "No files selected for audit", {
       completed: 0,
@@ -715,6 +727,27 @@ export class MainAgent extends EventEmitter {
         continue;
       }
 
+      let content: string;
+      try {
+        content = fs.readFileSync(todo.file, "utf-8");
+        setFileHash(fileId, this.hashFileContent(content));
+      } catch {
+        todo.status = "error";
+        todo.reason = "Cannot read file";
+        updateFileStatus(fileId, "error");
+        this.push("SYNC_TODO", { todos: [...this.todoList] });
+        this.pushAuditFileComplete({
+          filePath: todo.file,
+          guidelineTotal: 0,
+          status: "error",
+          summary: "Unable to read file contents.",
+          passCount: 0,
+          failCount: 0,
+          naCount: 0,
+        });
+        continue;
+      }
+
       const guidelines = this.getGuidelinesForAudit(fileId, todo.file);
       const ignoredIds = new Set(getIgnoredGuidelines(fileId));
       const guidelinesToCheck = guidelines.filter(
@@ -726,6 +759,7 @@ export class MainAgent extends EventEmitter {
         todo.reason = this.isStylesheetFile(todo.file)
           ? "No applicable non-contrast stylesheet checks remain"
           : "Only runtime-managed contrast checks apply";
+        updateFileStatus(fileId, "skipped");
         this.push("SYNC_TODO", { todos: [...this.todoList] });
         this.pushAuditFileComplete({
           filePath: todo.file,
@@ -742,6 +776,7 @@ export class MainAgent extends EventEmitter {
       if (guidelinesToCheck.length === 0) {
         todo.status = "skipped";
         todo.reason = "All applicable checks for this file are currently ignored";
+        updateFileStatus(fileId, "skipped");
         this.push("SYNC_TODO", { todos: [...this.todoList] });
         this.pushAuditFileComplete({
           filePath: todo.file,
@@ -759,26 +794,6 @@ export class MainAgent extends EventEmitter {
       this.push("SYNC_TODO", { todos: [...this.todoList] });
       updateFileStatus(fileId, "analyzing");
       this.pushAuditFileStart(todo.file, i + 1, total, guidelinesToCheck.length);
-
-      let content: string;
-      try {
-        content = fs.readFileSync(todo.file, "utf-8");
-      } catch {
-        todo.status = "error";
-        todo.reason = "Cannot read file";
-        updateFileStatus(fileId, "error");
-        this.push("SYNC_TODO", { todos: [...this.todoList] });
-        this.pushAuditFileComplete({
-          filePath: todo.file,
-          guidelineTotal: guidelinesToCheck.length,
-          status: "error",
-          summary: "Unable to read file contents.",
-          passCount: 0,
-          failCount: 0,
-          naCount: 0,
-        });
-        continue;
-      }
 
       const basename = path.basename(todo.file);
       const threadId = `audit-${i}`;

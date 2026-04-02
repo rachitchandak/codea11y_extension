@@ -140,6 +140,9 @@ class ReportService {
         this.tool = tool;
         this.nextCandidateId = 1;
     }
+    hashContent(content) {
+        return crypto.createHash("sha256").update(content, "utf8").digest("hex");
+    }
     async retrieveOrInitiateAudit(params) {
         const targetFilePath = normalizePath(params.filePath);
         const rootPath = normalizePath(params.rootPath);
@@ -245,6 +248,7 @@ class ReportService {
             }
             const content = await fs.readFile(filePath, "utf8");
             fileContents.set(filePath, content);
+            (0, db_1.setFileHash)(fileId, this.hashContent(content));
             (0, db_1.updateFileStatus)(fileId, "analyzing");
             this.seedApplicableGuidelines(filePath, fileId, runtimeReport, args.rootPath);
             const ignoredGuidelines = new Set((0, db_1.getIgnoredGuidelines)(fileId));

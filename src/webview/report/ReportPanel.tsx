@@ -118,6 +118,14 @@ function SummaryBadge({ label, value }: { label: string; value: string | number 
   );
 }
 
+function formatHash(fileHash: string | null | undefined): string {
+  if (!fileHash) {
+    return "Not captured";
+  }
+
+  return fileHash.slice(0, 12);
+}
+
 function OverviewTable({ rows }: { rows: ProjectReportReadyPayload["overview"]["auditedFiles"] }) {
   if (rows.length === 0) {
     return <p className="text-sm opacity-60">No audited files yet.</p>;
@@ -129,6 +137,7 @@ function OverviewTable({ rows }: { rows: ProjectReportReadyPayload["overview"]["
         <thead className="bg-vscode-input-bg">
           <tr>
             <th className="px-3 py-2 text-left font-semibold">File</th>
+            <th className="px-3 py-2 text-left font-semibold">Hash</th>
             <th className="px-3 py-2 text-left font-semibold">Status</th>
             <th className="px-3 py-2 text-left font-semibold">Score</th>
             <th className="px-3 py-2 text-left font-semibold">Issues</th>
@@ -138,6 +147,9 @@ function OverviewTable({ rows }: { rows: ProjectReportReadyPayload["overview"]["
           {rows.map((row) => (
             <tr key={row.filePath} className="border-t border-vscode-border">
               <td className="px-3 py-2 font-mono text-xs">{row.filePath}</td>
+              <td className="px-3 py-2 font-mono text-xs" title={row.fileHash || "Hash unavailable"}>
+                {formatHash(row.fileHash)}
+              </td>
               <td className="px-3 py-2 capitalize">{row.scanStatus}</td>
               <td className="px-3 py-2">
                 {typeof row.accessibilityScore === "number"
@@ -155,7 +167,8 @@ function OverviewTable({ rows }: { rows: ProjectReportReadyPayload["overview"]["
 
 function ProjectOverview({ report }: { report: ProjectReportReadyPayload }) {
   return (
-    <div className="space-y-6 p-4">
+    <div className="h-full overflow-y-auto p-4">
+      <div className="space-y-6">
       <section className="grid gap-3 md:grid-cols-4">
         <SummaryBadge label="Auditable Files" value={report.overview.totalAuditableFiles} />
         <SummaryBadge label="Audited Files" value={report.overview.auditedFileCount} />
@@ -203,15 +216,22 @@ function ProjectOverview({ report }: { report: ProjectReportReadyPayload }) {
           </div>
         )}
       </section>
+      </div>
     </div>
   );
 }
 
 function ProjectFileView({ tab, onIgnore }: { tab: ProjectReportFileTab; onIgnore: (id: string) => void }) {
   return (
-    <main className="overflow-y-auto p-4">
+    <main className="h-full overflow-y-auto p-4">
       <div className="mb-4 flex flex-wrap items-center gap-3">
         <h2 className="m-0 font-mono text-sm opacity-75">{tab.filePath}</h2>
+        <span
+          className="rounded-full border border-vscode-border px-2 py-0.5 font-mono text-xs opacity-75"
+          title={tab.fileHash || "Hash unavailable"}
+        >
+          hash {formatHash(tab.fileHash)}
+        </span>
         <span className="rounded-full border border-vscode-border px-2 py-0.5 text-xs capitalize opacity-75">
           {tab.scanStatus}
         </span>
@@ -259,9 +279,9 @@ function FileReportView({
   );
 
   return (
-    <div className="flex flex-1 overflow-hidden">
+    <div className="flex min-h-0 flex-1 overflow-hidden">
       <FileList files={fileEntries} selectedFile={selectedFile} onSelectFile={onSelectFile} />
-      <main className="flex-1 overflow-y-auto">
+      <main className="min-h-0 flex-1 overflow-y-auto">
         {selectedFile === null ? (
           <div className="flex h-full flex-col items-center justify-center opacity-50">
             <span className="codicon codicon-checklist mb-2 text-4xl" />
@@ -537,7 +557,7 @@ export default function ReportPanel() {
   }, [projectReport, selectedTab]);
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden">
       <header className="flex shrink-0 items-center justify-between border-b border-vscode-border px-4 py-3">
         <div className="flex items-center gap-3">
           <h1 className="m-0 text-base font-semibold">
@@ -604,7 +624,7 @@ export default function ReportPanel() {
             ))}
           </div>
 
-          <div className="flex-1 overflow-hidden">
+          <div className="min-h-0 flex-1 overflow-hidden">
             {selectedTab === "overview" || !selectedProjectTab ? (
               <ProjectOverview report={projectReport} />
             ) : (

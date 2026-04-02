@@ -41,6 +41,7 @@ exports.getDb = getDb;
 exports.upsertProject = upsertProject;
 exports.upsertFile = upsertFile;
 exports.updateFileStatus = updateFileStatus;
+exports.setFileHash = setFileHash;
 exports.markFileRuntimeAnalyzed = markFileRuntimeAnalyzed;
 exports.hasFileRuntimeAnalysis = hasFileRuntimeAnalysis;
 exports.upsertApplicableGuideline = upsertApplicableGuideline;
@@ -49,6 +50,7 @@ exports.getFileId = getFileId;
 exports.getApplicableGuidelines = getApplicableGuidelines;
 exports.getFailedGuidelines = getFailedGuidelines;
 exports.clearProjectRuntimeAnalysis = clearProjectRuntimeAnalysis;
+exports.clearRuntimeAnalysisForFiles = clearRuntimeAnalysisForFiles;
 exports.clearProjectLlmAuditResults = clearProjectLlmAuditResults;
 exports.clearAuditResultsForFiles = clearAuditResultsForFiles;
 exports.clearApplicableGuidelinesForFiles = clearApplicableGuidelinesForFiles;
@@ -87,6 +89,7 @@ function initDatabase(dbDir) {
       id                  INTEGER PRIMARY KEY AUTOINCREMENT,
       project_id          INTEGER NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
       path                TEXT NOT NULL,
+      file_hash           TEXT,
       scan_status         TEXT NOT NULL DEFAULT 'pending',
       runtime_analyzed    INTEGER NOT NULL DEFAULT 0,
       accessibility_score REAL,
@@ -157,6 +160,9 @@ function initDatabase(dbDir) {
     if (!cols.some((c) => c.name === "runtime_analyzed")) {
         db.exec("ALTER TABLE files ADD COLUMN runtime_analyzed INTEGER NOT NULL DEFAULT 0");
     }
+    if (!cols.some((c) => c.name === "file_hash")) {
+        db.exec("ALTER TABLE files ADD COLUMN file_hash TEXT");
+    }
     const auditResultCols = db
         .prepare("PRAGMA table_info(audit_results)")
         .all();
@@ -223,6 +229,11 @@ function updateFileStatus(fileId, status, score) {
             .run(status, fileId);
     }
 }
+function setFileHash(fileId, fileHash) {
+    getDb()
+        .prepare("UPDATE files SET file_hash = ? WHERE id = ?")
+        .run(fileHash, fileId);
+}
 function markFileRuntimeAnalyzed(fileId, analyzed = true) {
     getDb()
         .prepare("UPDATE files SET runtime_analyzed = ? WHERE id = ?")
@@ -284,6 +295,25 @@ function clearProjectRuntimeAnalysis(projectId) {
         .prepare(`DELETE FROM applicable_guidelines
        WHERE file_id IN (SELECT id FROM files WHERE project_id = ?)`)
         .run(projectId);
+}
+function clearRuntimeAnalysisForFiles(fileIds) {
+    if (fileIds.length === 0)
+        return;
+    const placeholders = fileIds.map(() => "?").join(", ");
+    getDb()
+        .prepare(`DELETE FROM audit_results
+       WHERE source = 'runtime'
+         AND file_id IN (${placeholders})`)
+        .run(...fileIds);
+    getDb()
+        .prepare(`DELETE FROM applicable_guidelines
+       WHERE file_id IN (${placeholders})`)
+        .run(...fileIds);
+    getDb()
+        .prepare(`UPDATE files
+       SET runtime_analyzed = 0
+       WHERE id IN (${placeholders})`)
+        .run(...fileIds);
 }
 function clearProjectLlmAuditResults(projectId) {
     getDb()
@@ -396,6 +426,7 @@ function getProjectAuditSnapshot(rootPath) {
     const rows = getDb()
         .prepare(`SELECT f.id AS file_id,
               f.path AS file_path,
+              f.file_hash AS file_hash,
               f.scan_status,
               f.runtime_analyzed,
               f.accessibility_score,
@@ -421,6 +452,7 @@ function getProjectAuditSnapshot(rootPath) {
         if (!file) {
             file = {
                 filePath: row.file_path,
+                fileHash: row.file_hash,
                 scanStatus: row.scan_status,
                 runtimeAnalyzed: row.runtime_analyzed === 1,
                 accessibilityScore: typeof row.accessibility_score === "number"

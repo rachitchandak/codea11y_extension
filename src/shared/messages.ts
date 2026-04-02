@@ -88,6 +88,7 @@ export interface ProjectReportOverview {
   averageAccessibilityScore: number | null;
   auditedFiles: Array<{
     filePath: string;
+    fileHash: string | null;
     issueCount: number;
     accessibilityScore: number | null;
     scanStatus: string;
@@ -97,6 +98,7 @@ export interface ProjectReportOverview {
 
 export interface ProjectReportFileTab {
   filePath: string;
+  fileHash: string | null;
   issueCount: number;
   accessibilityScore: number | null;
   scanStatus: string;

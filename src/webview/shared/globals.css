@@ -9,6 +9,12 @@
   color-scheme: light dark;
 }
 
+html,
+body,
+#root {
+  height: 100%;
+}
+
 body {
   margin: 0;
   padding: 0;
@@ -17,6 +23,11 @@ body {
   font-family: var(--vscode-font-family);
   font-size: var(--vscode-font-size);
   line-height: 1.4;
+  overflow: hidden;
+}
+
+#root {
+  min-height: 0;
 }
 
 *,

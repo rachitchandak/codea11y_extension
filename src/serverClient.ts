@@ -6,6 +6,7 @@ type RawFileReportPayload = Omit<FileReportReadyPayload, "kind">;
 
 export interface ProjectAuditSnapshotFile {
   filePath: string;
+  fileHash: string | null;
   scanStatus: string;
   runtimeAnalyzed: boolean;
   accessibilityScore: number | null;

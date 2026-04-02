@@ -15,6 +15,7 @@ import {
   insertAuditResult,
   insertStoredReport,
   markFileRuntimeAnalyzed,
+  setFileHash,
   StoredReportPayload,
   updateFileStatus,
   upsertApplicableGuideline,
@@ -195,6 +196,10 @@ export class ReportService {
     private readonly tool: ToolWrapper
   ) {}
 
+  private hashContent(content: string): string {
+    return crypto.createHash("sha256").update(content, "utf8").digest("hex");
+  }
+
   async retrieveOrInitiateAudit(
     params: RetrieveOrInitiateAuditParams
   ): Promise<StoredReportPayload> {
@@ -329,6 +334,7 @@ export class ReportService {
 
       const content = await fs.readFile(filePath, "utf8");
       fileContents.set(filePath, content);
+      setFileHash(fileId, this.hashContent(content));
       updateFileStatus(fileId, "analyzing");
 
       this.seedApplicableGuidelines(filePath, fileId, runtimeReport, args.rootPath);

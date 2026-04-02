@@ -35,6 +35,7 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.MainAgent = void 0;
 const events_1 = require("events");
+const crypto = __importStar(require("crypto"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 const db_1 = require("./db");
@@ -64,6 +65,9 @@ class MainAgent extends events_1.EventEmitter {
     }
     get currentState() {
         return this.state;
+    }
+    hashFileContent(content) {
+        return crypto.createHash("sha256").update(content, "utf8").digest("hex");
     }
     /* ── Helper: push an event to the consumer ─────────────────────── */
     push(event, data) {
@@ -399,11 +403,12 @@ class MainAgent extends events_1.EventEmitter {
         this.pushRuntimeUpdate("analyzing", "Runtime scan finished. Mapping results...", [
             "Applying scoped guideline mapping to the selected files.",
         ]);
-        (0, db_1.clearProjectRuntimeAnalysis)(this.projectId);
+        const targetFileIds = this.todoList.map((todo) => (0, db_1.upsertFile)(this.projectId, todo.file));
+        (0, db_1.clearRuntimeAnalysisForFiles)(targetFileIds);
         this.contrastIssues = [];
         this.pendingRuntimeResults = [];
-        for (const todo of this.todoList) {
-            const fileId = (0, db_1.upsertFile)(this.projectId, todo.file);
+        for (let index = 0; index < this.todoList.length; index++) {
+            const fileId = targetFileIds[index];
             (0, db_1.markFileRuntimeAnalyzed)(fileId, true);
         }
         const report = result.report;
@@ -487,7 +492,10 @@ class MainAgent extends events_1.EventEmitter {
     async phaseAudit(params) {
         const total = this.todoList.length;
         let processed = 0;
-        (0, db_1.clearProjectLlmAuditResults)(this.projectId);
+        const targetFileIds = this.todoList
+            .map((todo) => (0, db_1.getFileId)(this.projectId, todo.file))
+            .filter((fileId) => typeof fileId === "number");
+        (0, db_1.clearAuditResultsForFiles)(targetFileIds, "llm");
         this.pushPhaseStatus("audit", total > 0 ? "analyzing" : "done", total > 0 ? "Starting file audit" : "No files selected for audit", {
             completed: 0,
             total,
@@ -510,6 +518,27 @@ class MainAgent extends events_1.EventEmitter {
                 });
                 continue;
             }
+            let content;
+            try {
+                content = fs.readFileSync(todo.file, "utf-8");
+                (0, db_1.setFileHash)(fileId, this.hashFileContent(content));
+            }
+            catch {
+                todo.status = "error";
+                todo.reason = "Cannot read file";
+                (0, db_1.updateFileStatus)(fileId, "error");
+                this.push("SYNC_TODO", { todos: [...this.todoList] });
+                this.pushAuditFileComplete({
+                    filePath: todo.file,
+                    guidelineTotal: 0,
+                    status: "error",
+                    summary: "Unable to read file contents.",
+                    passCount: 0,
+                    failCount: 0,
+                    naCount: 0,
+                });
+                continue;
+            }
             const guidelines = this.getGuidelinesForAudit(fileId, todo.file);
             const ignoredIds = new Set((0, db_1.getIgnoredGuidelines)(fileId));
             const guidelinesToCheck = guidelines.filter((guideline) => !ignoredIds.has(guideline.wcag_id));
@@ -518,6 +547,7 @@ class MainAgent extends events_1.EventEmitter {
                 todo.reason = this.isStylesheetFile(todo.file)
                     ? "No applicable non-contrast stylesheet checks remain"
                     : "Only runtime-managed contrast checks apply";
+                (0, db_1.updateFileStatus)(fileId, "skipped");
                 this.push("SYNC_TODO", { todos: [...this.todoList] });
                 this.pushAuditFileComplete({
                     filePath: todo.file,
@@ -533,6 +563,7 @@ class MainAgent extends events_1.EventEmitter {
             if (guidelinesToCheck.length === 0) {
                 todo.status = "skipped";
                 todo.reason = "All applicable checks for this file are currently ignored";
+                (0, db_1.updateFileStatus)(fileId, "skipped");
                 this.push("SYNC_TODO", { todos: [...this.todoList] });
                 this.pushAuditFileComplete({
                     filePath: todo.file,
@@ -549,26 +580,6 @@ class MainAgent extends events_1.EventEmitter {
             this.push("SYNC_TODO", { todos: [...this.todoList] });
             (0, db_1.updateFileStatus)(fileId, "analyzing");
             this.pushAuditFileStart(todo.file, i + 1, total, guidelinesToCheck.length);
-            let content;
-            try {
-                content = fs.readFileSync(todo.file, "utf-8");
-            }
-            catch {
-                todo.status = "error";
-                todo.reason = "Cannot read file";
-                (0, db_1.updateFileStatus)(fileId, "error");
-                this.push("SYNC_TODO", { todos: [...this.todoList] });
-                this.pushAuditFileComplete({
-                    filePath: todo.file,
-                    guidelineTotal: guidelinesToCheck.length,
-                    status: "error",
-                    summary: "Unable to read file contents.",
-                    passCount: 0,
-                    failCount: 0,
-                    naCount: 0,
-                });
-                continue;
-            }
             const basename = path.basename(todo.file);
             const threadId = `audit-${i}`;
             const auditableInventory = (0, sourceInventory_1.extractAuditableElementInventory)(content);

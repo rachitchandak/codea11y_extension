@@ -1,6 +1,7 @@
 import type { AuditResult, FileReportReadyPayload } from "./shared/messages";
 export interface ProjectAuditSnapshotFile {
     filePath: string;
+    fileHash: string | null;
     scanStatus: string;
     runtimeAnalyzed: boolean;
     accessibilityScore: number | null;

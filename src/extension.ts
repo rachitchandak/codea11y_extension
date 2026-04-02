@@ -146,6 +146,7 @@ function buildProjectReportPayload(args: {
   auditableFiles: string[];
   snapshotFiles: Array<{
     filePath: string;
+    fileHash: string | null;
     scanStatus: string;
     runtimeAnalyzed: boolean;
     accessibilityScore: number | null;
@@ -171,6 +172,7 @@ function buildProjectReportPayload(args: {
 
     return {
       filePath: file.filePath,
+      fileHash: file.fileHash,
       issueCount,
       accessibilityScore: file.accessibilityScore,
       scanStatus: file.scanStatus,
@@ -207,6 +209,7 @@ function buildProjectReportPayload(args: {
       averageAccessibilityScore,
       auditedFiles: fileTabs.map((tab) => ({
         filePath: tab.filePath,
+        fileHash: tab.fileHash,
         issueCount: tab.issueCount,
         accessibilityScore: tab.accessibilityScore,
         scanStatus: tab.scanStatus,
