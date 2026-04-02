@@ -76,12 +76,12 @@ export default function ChatListView({ onOpenChat, onNewChat }: ChatListViewProp
   };
 
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex h-full min-h-0 flex-col bg-vscode-bg">
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-vscode-border">
         <h2 className="text-sm font-semibold m-0">Chat History</h2>
         <button
-          className="flex items-center gap-1 px-2 py-1 rounded text-xs font-medium
+          className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs font-medium
                      bg-vscode-button-bg text-vscode-button-fg
                      hover:bg-vscode-button-hover transition-colors"
           onClick={onNewChat}
@@ -121,7 +121,7 @@ export default function ChatListView({ onOpenChat, onNewChat }: ChatListViewProp
                     <input
                       className="text-sm font-medium m-0 w-full bg-vscode-input-bg
                                  text-vscode-input-fg border border-vscode-input-border
-                                 rounded px-1.5 py-0.5 outline-none
+                                 rounded-sm px-1.5 py-0.5 outline-none
                                  focus:border-vscode-button-bg"
                       value={renameValue}
                       autoFocus
@@ -153,7 +153,7 @@ export default function ChatListView({ onOpenChat, onNewChat }: ChatListViewProp
 
                 {/* Rename button */}
                 <button
-                  className="shrink-0 p-1 rounded opacity-50 hover:opacity-100
+                  className="shrink-0 p-1 rounded-sm opacity-50 hover:opacity-100
                              hover:bg-vscode-input-bg transition-opacity"
                   onClick={(e) => {
                     e.stopPropagation();
@@ -167,7 +167,7 @@ export default function ChatListView({ onOpenChat, onNewChat }: ChatListViewProp
 
                 {/* Delete button */}
                 <button
-                  className="shrink-0 p-1 rounded opacity-50 hover:opacity-100
+                  className="shrink-0 p-1 rounded-sm opacity-50 hover:opacity-100
                              hover:bg-vscode-input-bg transition-opacity"
                   onClick={(e) => handleDelete(e, chat.id)}
                   disabled={deletingId === chat.id}

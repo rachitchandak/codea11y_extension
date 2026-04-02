@@ -36,9 +36,9 @@ function TodoPanel({ tasks }: { tasks: TodoItem[] }) {
   const [open, setOpen] = useState(true);
 
   return (
-    <section className="mx-3 rounded-2xl border border-vscode-border bg-vscode-editor-background">
+    <section className="bg-vscode-bg">
       <button
-        className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-vscode-list-hover transition-colors"
+        className="flex w-full items-center justify-between px-3 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] hover:bg-vscode-list-hover transition-colors"
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
       >
@@ -48,13 +48,13 @@ function TodoPanel({ tasks }: { tasks: TodoItem[] }) {
         />
       </button>
 
-      <div className="collapsible-content" data-state={open ? "open" : "closed"}>
+      <div className="collapsible-content px-3 pb-3" data-state={open ? "open" : "closed"}>
         {tasks.length === 0 ? (
-          <p className="px-3 py-2 text-xs opacity-60">No workflow todos</p>
+          <p className="sidebar-detail-panel px-3 py-2 text-xs opacity-60">No workflow todos</p>
         ) : (
-          <ul className="m-0 list-none p-0">
+          <ul className="sidebar-detail-panel m-0 list-none p-1">
             {tasks.map((task) => (
-              <li key={task.id} className="flex items-start gap-2 px-3 py-2 text-xs">
+              <li key={task.id} className="flex items-start gap-2 rounded-md px-2 py-2 text-xs">
                 <span className={`codicon mt-0.5 ${statusIcon[task.status]}`} />
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-2">
@@ -80,10 +80,12 @@ function MessageBubble({ msg }: { msg: ChatMessage }) {
   const isUser = msg.role === "user";
 
   return (
-    <div className={isUser ? "ml-10" : "mr-6"}>
+    <div className={isUser ? "ml-8 pl-2" : "pr-0"}>
       <div
-        className={`rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
-          isUser ? "bg-vscode-input-bg" : "border border-vscode-border"
+        className={`rounded-md px-3 py-2 text-sm whitespace-pre-wrap ${
+          isUser
+            ? "border border-vscode-input-border bg-vscode-input-bg"
+            : "border border-transparent bg-transparent"
         }`}
       >
         <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide opacity-60">
@@ -106,14 +108,16 @@ function ActivityCard({
   onToggle: () => void;
 }) {
   return (
-    <div className="mr-6 rounded-xl border border-vscode-border bg-vscode-input-bg">
+    <section className="pb-1">
       <button
-        className="flex w-full items-start gap-3 px-3 py-3 text-left hover:bg-vscode-list-hover transition-colors"
+        className="relative w-full rounded-md py-3 pl-9 pr-3 text-left hover:bg-vscode-list-hover transition-colors"
         onClick={onToggle}
         aria-expanded={!collapsed}
       >
-        <span className={`codicon mt-0.5 ${statusIcon[item.status]} ${statusToneClass[item.status]}`} />
-        <div className="min-w-0 flex-1">
+        <span
+          className={`codicon absolute left-3 top-3.5 ${statusIcon[item.status]} ${statusToneClass[item.status]}`}
+        />
+        <div className="min-w-0">
           <div className="flex items-center justify-between gap-3">
             <div className="min-w-0">
               <div className="truncate text-sm font-semibold">{item.heading}</div>
@@ -121,7 +125,7 @@ function ActivityCard({
             </div>
             <div className="flex shrink-0 items-center gap-2">
               {item.countLabel && (
-                <span className="rounded-full border border-vscode-border px-2 py-0.5 text-[11px] opacity-75">
+                <span className="rounded-md border border-vscode-border px-2 py-0.5 text-[11px] opacity-75">
                   {item.countLabel}
                 </span>
               )}
@@ -133,19 +137,21 @@ function ActivityCard({
         </div>
       </button>
 
-      <div className="collapsible-content px-3 pb-3" data-state={collapsed ? "closed" : "open"}>
-        {item.summary && <p className="m-0 text-sm opacity-85">{item.summary}</p>}
-        {item.lines.length > 0 && (
-          <ul className="m-0 mt-2 list-none space-y-1 p-0 text-xs opacity-75">
-            {item.lines.map((line) => (
-              <li key={line.id} className="leading-5">
-                {line.text}
-              </li>
-            ))}
-          </ul>
-        )}
+      <div className="collapsible-content pl-9 pr-3" data-state={collapsed ? "closed" : "open"}>
+        <div className="sidebar-detail-panel px-3 py-3">
+          {item.summary && <p className="m-0 text-sm opacity-85">{item.summary}</p>}
+          {item.lines.length > 0 && (
+            <ul className="m-0 mt-2 list-none space-y-1 p-0 text-xs opacity-75">
+              {item.lines.map((line) => (
+                <li key={line.id} className="leading-5">
+                  {line.text}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
       </div>
-    </div>
+    </section>
   );
 }
 
@@ -252,10 +258,10 @@ export default function ChatView({ chatId, chatTitle, onBack, onTitleChanged }: 
   };
 
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-full min-h-0 flex-col bg-vscode-bg">
       <div className="flex items-center gap-2 border-b border-vscode-border px-3 py-2">
         <button
-          className="shrink-0 rounded p-1 hover:bg-vscode-list-hover transition-colors"
+          className="shrink-0 rounded-sm p-1 hover:bg-vscode-list-hover transition-colors"
           onClick={onBack}
           title="Back to chat list"
         >
@@ -265,7 +271,7 @@ export default function ChatView({ chatId, chatTitle, onBack, onTitleChanged }: 
         {isEditing ? (
           <input
             ref={titleInputRef}
-            className="m-0 flex-1 rounded border border-vscode-input-border bg-vscode-input-bg px-1.5 py-0.5 text-sm font-semibold text-vscode-input-fg outline-none focus:border-vscode-button-bg"
+            className="m-0 flex-1 rounded-sm border border-vscode-input-border bg-vscode-input-bg px-1.5 py-0.5 text-sm font-semibold text-vscode-input-fg outline-none focus:border-vscode-button-bg"
             value={editTitle}
             onChange={(event) => setEditTitle(event.target.value)}
             onBlur={() => {
@@ -302,7 +308,7 @@ export default function ChatView({ chatId, chatTitle, onBack, onTitleChanged }: 
         )}
 
         <button
-          className="shrink-0 rounded p-1 opacity-50 hover:bg-vscode-list-hover hover:opacity-100 transition-all"
+          className="shrink-0 rounded-sm p-1 opacity-50 hover:bg-vscode-list-hover hover:opacity-100 transition-all"
           onClick={() => {
             setIsEditing(true);
             setTimeout(() => titleInputRef.current?.select(), 0);
@@ -313,30 +319,32 @@ export default function ChatView({ chatId, chatTitle, onBack, onTitleChanged }: 
         </button>
       </div>
 
-      <div className="flex-1 space-y-3 overflow-y-auto py-3">
+      <div className="flex-1 overflow-y-auto px-3 py-3">
         {transcript.length === 0 && (
           <p className="mt-8 px-3 text-center text-sm opacity-50">
             Ask a question about accessibility…
           </p>
         )}
 
-        {transcript.map((item) =>
-          item.kind === "message" ? (
-            <MessageBubble key={item.id} msg={item} />
-          ) : (
-            <ActivityCard
-              key={item.id}
-              item={item}
-              collapsed={collapsedCards[item.id] ?? false}
-              onToggle={() =>
-                setCollapsedCards((prev) => ({
-                  ...prev,
-                  [item.id]: !(prev[item.id] ?? false),
-                }))
-              }
-            />
-          )
-        )}
+        <div className="space-y-2">
+          {transcript.map((item) =>
+            item.kind === "message" ? (
+              <MessageBubble key={item.id} msg={item} />
+            ) : (
+              <ActivityCard
+                key={item.id}
+                item={item}
+                collapsed={collapsedCards[item.id] ?? false}
+                onToggle={() =>
+                  setCollapsedCards((prev) => ({
+                    ...prev,
+                    [item.id]: !(prev[item.id] ?? false),
+                  }))
+                }
+              />
+            )
+          )}
+        </div>
         <div ref={bottomRef} />
       </div>
 
@@ -344,7 +352,7 @@ export default function ChatView({ chatId, chatTitle, onBack, onTitleChanged }: 
 
       <div className="flex items-end gap-2 border-t border-vscode-border p-2">
         <textarea
-          className="min-h-[36px] max-h-[120px] flex-1 resize-none rounded border border-vscode-input-border bg-vscode-input-bg px-2 py-1.5 text-sm text-vscode-input-fg outline-none focus:border-vscode-button-bg"
+          className="min-h-[36px] max-h-[120px] flex-1 resize-none rounded-sm border border-vscode-input-border bg-vscode-input-bg px-2 py-1.5 text-sm text-vscode-input-fg outline-none focus:border-vscode-button-bg"
           rows={1}
           placeholder="Ask about WCAG compliance…"
           value={input}
@@ -352,7 +360,7 @@ export default function ChatView({ chatId, chatTitle, onBack, onTitleChanged }: 
           onKeyDown={handleKeyDown}
         />
         <button
-          className="rounded bg-vscode-button-bg px-3 py-1.5 text-sm font-medium text-vscode-button-fg hover:bg-vscode-button-hover transition-colors disabled:opacity-40"
+          className="rounded-sm bg-vscode-button-bg px-3 py-1.5 text-sm font-medium text-vscode-button-fg hover:bg-vscode-button-hover transition-colors disabled:opacity-40"
           disabled={!input.trim()}
           onClick={handleSend}
         >

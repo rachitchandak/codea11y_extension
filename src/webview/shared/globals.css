@@ -89,3 +89,9 @@ body {
   max-height: 1200px;
   opacity: 1;
 }
+
+.sidebar-detail-panel {
+  border: 1px solid var(--vscode-panel-border);
+  border-radius: 6px;
+  background: var(--vscode-sideBarSectionHeader-background, var(--vscode-input-background));
+}
