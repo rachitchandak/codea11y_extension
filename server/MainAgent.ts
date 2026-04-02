@@ -10,11 +10,11 @@ import {
   markFileRuntimeAnalyzed,
   hasFileRuntimeAnalysis,
   clearProjectRuntimeAnalysis,
+  clearProjectLlmAuditResults,
   insertAuditResult,
   getAuditResultsBySource,
-  upsertGuideline,
-  getActiveGuidelines,
-  getFileGuidelines,
+  upsertApplicableGuideline,
+  getApplicableGuidelines,
   getFailedGuidelines,
   getIgnoredGuidelines,
   getFileId,
@@ -24,64 +24,28 @@ import {
   extractContrastFailures,
   isContrastGuideline,
   getContrastIssuesForFile,
-  formatContrastFactsForJudge,
 } from "./ContrastProcessor";
+import type {
+  AgentState,
+  AgentTodoItem,
+  AgentEvent,
+  AgentParams,
+  RuntimeResult,
+} from "./agentTypes";
+import { STYLESHEET_EXTENSIONS, STYLESHEET_FALLBACK_GUIDELINES } from "./agentConstants";
+import { dedupeGuidelineIssues } from "./issueHelpers";
+import { extractAuditableElementInventory } from "./sourceInventory";
+import {
+  INTENT_SYSTEM_PROMPT,
+  AUDIT_SYSTEM_PROMPT,
+  VALIDATE_SYSTEM_PROMPT,
+  buildFilePrimePrompt,
+  buildGuidelineCheckPrompt,
+  buildValidatePrompt,
+} from "./prompts";
 
-/* ------------------------------------------------------------------ *
- *  Types                                                              *
- * ------------------------------------------------------------------ */
-export type AgentState =
-  | "idle"
-  | "intent"
-  | "runtime"
-  | "audit"
-  | "validate"
-  | "done"
-  | "error";
-
-export interface AgentTodoItem {
-  file: string;
-  status: "pending" | "scanning" | "done" | "skipped" | "error";
-  reason: string;
-}
-
-export interface AgentEvent {
-  event: string;
-  data: unknown;
-}
-
-export interface AgentParams {
-  userQuery: string;
-  fileTree: unknown;
-  rootPath: string;
-  projectUrl?: string;
-  forceRuntime?: boolean;
-}
-
-const STYLESHEET_EXTENSIONS = new Set([".css", ".scss", ".sass", ".less"]);
-
-const STYLESHEET_FALLBACK_GUIDELINES = [
-  {
-    wcag_id: "1.4.1",
-    description:
-      "Use of Color: styling must not rely on color alone to communicate status, meaning, or required actions.",
-  },
-  {
-    wcag_id: "2.4.7",
-    description:
-      "Focus Visible: styling must preserve a clear visible focus indicator and must not remove outlines without an adequate replacement.",
-  },
-  {
-    wcag_id: "1.4.13",
-    description:
-      "Content on Hover or Focus: hover or focus triggered content styled here must remain dismissible, hoverable, and persistent when required.",
-  },
-  {
-    wcag_id: "2.4.11",
-    description:
-      "Focus Not Obscured (Minimum): sticky, overlay, or positioned styling must not obscure focused controls.",
-  },
-];
+// Re-export types for consumers
+export type { AgentState, AgentTodoItem, AgentEvent, AgentParams };
 
 /* ------------------------------------------------------------------ *
  *  MainAgent                                                          *
@@ -96,24 +60,9 @@ export class MainAgent extends EventEmitter {
   private projectId = 0;
   private needsRuntime = false;
   private contrastIssues: ContrastIssue[] = [];
-  private pendingRuntimeResults: Array<{
-    id: string;
-    filePath: string;
-    guideline: string;
-    severity: string;
-    issueDescription: string;
-    lineNumber: null;
-    selector: string | null;
-    snippet: string;
-    suggestion: string;
-    ignored: boolean;
-    source: "runtime";
-  }> = [];
+  private pendingRuntimeResults: RuntimeResult[] = [];
 
-  constructor(
-    private llm: LLMClient,
-    private tool: ToolWrapper
-  ) {
+  constructor(private llm: LLMClient, private tool: ToolWrapper) {
     super();
   }
 
@@ -124,6 +73,168 @@ export class MainAgent extends EventEmitter {
   /* ── Helper: push an event to the consumer ─────────────────────── */
   private push(event: string, data: unknown): void {
     this.emit("event", { event, data } as AgentEvent);
+  }
+
+  private pushWorkflowState(args: {
+    kind: "audit";
+    title: string;
+    summary: string;
+    status: "pending" | "analyzing" | "done" | "error" | "skipped";
+    scopeLabel?: string;
+    detail?: string;
+  }): void {
+    this.push("WORKFLOW_CONTEXT", args);
+  }
+
+  private pushWorkflowTodos(
+    todos: Array<{
+      id: string;
+      title: string;
+      status: "pending" | "analyzing" | "done" | "error" | "skipped";
+      detail?: string;
+      countLabel?: string;
+    }>
+  ): void {
+    this.push("WORKFLOW_TODOS", { todos });
+  }
+
+  private pushPhaseStatus(
+    phase: "runtime" | "audit" | "validate",
+    status: "pending" | "analyzing" | "done" | "error" | "skipped",
+    detail: string,
+    counts?: { completed?: number; total?: number }
+  ): void {
+    this.push("PHASE_STATUS", {
+      phase,
+      status,
+      detail,
+      completed: counts?.completed,
+      total: counts?.total,
+    });
+  }
+
+  private pushIntentSummary(totalFiles: number, runtimeMode: "required" | "cached"): void {
+    this.push("INTENT_SUMMARY", {
+      totalFiles,
+      runtimeMode,
+    });
+  }
+
+  private pushRuntimeUpdate(
+    status: "pending" | "analyzing" | "done" | "error" | "skipped",
+    summary: string,
+    details?: string[],
+    countLabel?: string
+  ): void {
+    this.push("RUNTIME_UPDATE", {
+      status,
+      summary,
+      details,
+      countLabel,
+    });
+  }
+
+  private pushAuditFileStart(
+    filePath: string,
+    fileIndex: number,
+    fileTotal: number,
+    guidelineTotal: number
+  ): void {
+    this.push("AUDIT_FILE_START", {
+      filePath,
+      fileIndex,
+      fileTotal,
+      guidelineTotal,
+    });
+  }
+
+  private pushAuditGuidelineProgress(payload: {
+    filePath: string;
+    guidelineId: string;
+    guidelineDescription: string;
+    guidelineIndex: number;
+    guidelineTotal: number;
+    latestStatus: "passed" | "failed" | "na";
+    passCount: number;
+    failCount: number;
+    naCount: number;
+  }): void {
+    this.push("AUDIT_GUIDELINE_PROGRESS", payload);
+  }
+
+  private pushAuditFileComplete(payload: {
+    filePath: string;
+    guidelineTotal: number;
+    status: "done" | "error" | "skipped";
+    summary: string;
+    passCount: number;
+    failCount: number;
+    naCount: number;
+  }): void {
+    this.push("AUDIT_FILE_COMPLETE", payload);
+  }
+
+  private pushValidationUpdate(
+    status: "pending" | "analyzing" | "done" | "error" | "skipped",
+    summary: string,
+    counts?: { completed?: number; total?: number },
+    filePath?: string
+  ): void {
+    this.push("VALIDATION_UPDATE", {
+      status,
+      summary,
+      completed: counts?.completed,
+      total: counts?.total,
+      filePath,
+    });
+  }
+
+  private buildWorkflowTodos(rawTodos: unknown): Array<{
+    id: "runtime" | "audit" | "validate";
+    title: string;
+    status: "pending" | "analyzing" | "done" | "error" | "skipped";
+    detail?: string;
+  }> {
+    const defaults = {
+      runtime: "Run runtime analysis",
+      audit: "Audit selected files",
+      validate: "Review findings",
+    } as const;
+    const expectedIds = ["runtime", "audit", "validate"] as const;
+    const items = new Map<string, { title?: string; detail?: string }>();
+
+    if (Array.isArray(rawTodos)) {
+      for (const todo of rawTodos) {
+        if (!todo || typeof todo !== "object") continue;
+
+        const id = typeof (todo as { id?: unknown }).id === "string"
+          ? (todo as { id: string }).id.trim()
+          : "";
+
+        if (!expectedIds.includes(id as typeof expectedIds[number])) {
+          continue;
+        }
+
+        const title = typeof (todo as { title?: unknown }).title === "string"
+          ? (todo as { title: string }).title.trim()
+          : "";
+        const detail = typeof (todo as { detail?: unknown }).detail === "string"
+          ? (todo as { detail: string }).detail.trim()
+          : "";
+
+        items.set(id, {
+          title: title || undefined,
+          detail: detail || undefined,
+        });
+      }
+    }
+
+    return expectedIds.map((id) => ({
+      id,
+      title: items.get(id)?.title || defaults[id],
+      status: "pending",
+      detail: items.get(id)?.detail,
+    }));
   }
 
   private normalizeFilePath(filePath: string): string {
@@ -145,146 +256,14 @@ export class MainAgent extends EventEmitter {
     fileId: number,
     filePath: string
   ): Array<{ wcag_id: string; description: string }> {
-    const existing = getFileGuidelines(fileId);
+    const existing = getApplicableGuidelines(fileId);
     const guidelineMap = new Map(
       existing.map((guideline) => [guideline.wcag_id, guideline])
     );
 
-    if (this.isStylesheetFile(filePath)) {
-      for (const guideline of STYLESHEET_FALLBACK_GUIDELINES) {
-        if (!guidelineMap.has(guideline.wcag_id)) {
-          upsertGuideline(
-            fileId,
-            guideline.wcag_id,
-            guideline.description,
-            "active"
-          );
-          guidelineMap.set(guideline.wcag_id, {
-            ...guideline,
-            status: "active",
-          });
-        }
-      }
-    }
-
     return [...guidelineMap.values()]
-      .filter(
-        (guideline) =>
-          guideline.status !== "ignored" &&
-          guideline.status !== "na" &&
-          !isContrastGuideline(guideline.wcag_id)
-      )
+      .filter((guideline) => !isContrastGuideline(guideline.wcag_id))
       .map(({ wcag_id, description }) => ({ wcag_id, description }));
-  }
-
-  private dedupeGuidelineIssues(
-    issues: Array<{
-      issueDescription?: string;
-      severity?: string;
-      lineNumber?: number | null;
-      selector?: string | null;
-      snippet?: string | null;
-      suggestion?: string | null;
-    }>
-  ): Array<{
-    issueDescription: string;
-    severity: string;
-    lineNumber: number | null;
-    selector: string | null;
-    snippet: string | null;
-    suggestion: string | null;
-  }> {
-    const deduped = new Map<
-      string,
-      {
-        issueDescription: string;
-        severity: string;
-        lineNumber: number | null;
-        selector: string | null;
-        snippet: string | null;
-        suggestion: string | null;
-      }
-    >();
-
-    for (const issue of issues || []) {
-      const normalized = {
-        issueDescription: this.normalizeIssueText(issue.issueDescription),
-        severity: this.normalizeSeverity(issue.severity),
-        lineNumber: issue.lineNumber ?? null,
-        selector: this.nullableIssueText(issue.selector),
-        snippet: this.nullableIssueText(issue.snippet),
-        suggestion: this.nullableIssueText(issue.suggestion),
-      };
-
-      const dedupeKey = this.buildIssueDedupeKey(normalized);
-      const existing = deduped.get(dedupeKey);
-      if (!existing) {
-        deduped.set(dedupeKey, normalized);
-        continue;
-      }
-
-      const preferIncoming =
-        this.severityRank(normalized.severity) >
-        this.severityRank(existing.severity);
-      const primary = preferIncoming ? normalized : existing;
-      const secondary = preferIncoming ? existing : normalized;
-
-      deduped.set(dedupeKey, {
-        issueDescription:
-          primary.issueDescription || secondary.issueDescription,
-        severity: primary.severity || secondary.severity || "warning",
-        lineNumber: primary.lineNumber ?? secondary.lineNumber ?? null,
-        selector: primary.selector || secondary.selector || null,
-        snippet: primary.snippet || secondary.snippet || null,
-        suggestion: primary.suggestion || secondary.suggestion || null,
-      });
-    }
-
-    return [...deduped.values()];
-  }
-
-  private buildIssueDedupeKey(issue: {
-    issueDescription: string;
-    lineNumber: number | null;
-    selector: string | null;
-    snippet: string | null;
-  }): string {
-    const hasLocation = issue.lineNumber !== null || Boolean(issue.selector);
-    if (hasLocation) {
-      return [issue.lineNumber ?? "", issue.selector || ""].join("|");
-    }
-
-    return [issue.snippet || "", issue.issueDescription].join("|");
-  }
-
-  private severityRank(severity: string): number {
-    switch (severity) {
-      case "error":
-        return 3;
-      case "warning":
-        return 2;
-      case "info":
-        return 1;
-      default:
-        return 0;
-    }
-  }
-
-  private normalizeSeverity(severity: string | undefined): string {
-    const normalized = String(severity || "warning").toLowerCase();
-    if (normalized === "error" || normalized === "warning" || normalized === "info") {
-      return normalized;
-    }
-    return "warning";
-  }
-
-  private normalizeIssueText(value: unknown): string {
-    return String(value || "").replace(/\s+/g, " ").trim();
-  }
-
-  private nullableIssueText(value: unknown): string | null {
-    const normalized = this.normalizeIssueText(value);
-    return normalized || null;
   }
 
   private loadPersistedRuntimeResults(): void {
@@ -293,9 +272,7 @@ export class MainAgent extends EventEmitter {
 
     for (const todo of this.todoList) {
       const fileId = getFileId(this.projectId, todo.file);
-      if (!fileId) {
-        continue;
-      }
+      if (!fileId) continue;
 
       const runtimeResults = getAuditResultsBySource(fileId, "runtime");
       for (const result of runtimeResults) {
@@ -338,27 +315,31 @@ export class MainAgent extends EventEmitter {
    * ================================================================ */
   async run(params: AgentParams): Promise<void> {
     try {
-      // Phase 1 ─ Intent & TODO Generation
       this.state = "intent";
-      this.push("AGENT_MESSAGE", {
-        content: "Analyzing your project and generating audit plan…",
-      });
-      await this.phaseIntent(params);
+      const shouldAudit = await this.phaseIntent(params);
 
-      // Phase 2 ─ Runtime Integration (wcag_mapper)
+      if (!shouldAudit) {
+        this.state = "done";
+        return;
+      }
+
       this.state = "runtime";
       await this.phaseRuntime(params);
 
-      // Phase 3 ─ Granular Audit Loop
       this.state = "audit";
       await this.phaseAudit(params);
 
-      // Phase 4 ─ Final Validation (LLM-as-a-Judge)
       this.state = "validate";
       await this.phaseValidate(params);
 
-      // Done
       this.state = "done";
+      this.pushWorkflowState({
+        kind: "audit",
+        title: "Accessibility audit",
+        summary: "Audit workflow complete.",
+        status: "done",
+        scopeLabel: `${this.todoList.length} file${this.todoList.length === 1 ? "" : "s"}`,
+      });
       this.push("AGENT_MESSAGE", {
         content: "Audit complete! Check the Report panel for full results.",
       });
@@ -372,32 +353,13 @@ export class MainAgent extends EventEmitter {
   /* ================================================================ *
    *  Phase 1 – Intent & TODO Generation                               *
    * ================================================================ */
-  private async phaseIntent(params: AgentParams): Promise<void> {
+  private async phaseIntent(params: AgentParams): Promise<boolean> {
     const { userQuery, fileTree, rootPath } = params;
     const projectName = path.basename(rootPath);
     this.projectId = upsertProject(projectName, rootPath);
 
-    // Ask the LLM to pick target files and explain why
     const threadId = "intent";
-    this.llm.createThread(
-      threadId,
-      `You are an expert accessibility auditor. Given a user query and a project file tree, determine which specific files need accessibility auditing.
-
-Return a JSON object with exactly this shape:
-{
-  "targetFiles": [
-    { "file": "relative/path/to/file.tsx", "reason": "Brief explanation of why this file needs auditing" }
-  ],
-  "reasoning": "Brief overall explanation of your file selection strategy"
-}
-
-Rules:
-- Only include files that actually exist in the provided file tree.
-- Use the relative paths as shown in the file tree.
-- Focus on UI files: HTML, JSX, TSX, Vue, Svelte, CSS, etc.
-- Prioritize files with interactive elements, forms, navigation, images, and dynamic content.
-- Consider the user's query to narrow focus if they specify particular concerns.`
-    );
+    this.llm.createThread(threadId, INTENT_SYSTEM_PROMPT);
 
     const reply = await this.llm.send(
       threadId,
@@ -407,10 +369,66 @@ Rules:
     this.llm.dropThread(threadId);
 
     const parsed = JSON.parse(reply);
-    const targets: Array<{ file: string; reason: string }> =
-      parsed.targetFiles || [];
+    const intent = parsed.intent === "audit" ? "audit" : "no_audit";
+    const reasoning = typeof parsed.reasoning === "string" ? parsed.reasoning.trim() : "";
+    const responseMessage =
+      typeof parsed.responseMessage === "string" ? parsed.responseMessage.trim() : "";
 
-    // Register files, check for existing guidelines
+    if (intent !== "audit") {
+      this.todoList = [];
+      this.needsRuntime = false;
+      this.pushWorkflowTodos([]);
+      this.pushWorkflowState({
+        kind: "audit",
+        title: "Accessibility audit",
+        summary: "No audit started.",
+        status: "skipped",
+        scopeLabel: path.basename(rootPath),
+        detail:
+          reasoning ||
+          "The request did not clearly ask for an accessibility audit.",
+      });
+      this.push("AGENT_MESSAGE", {
+        content:
+          responseMessage ||
+          "I did not start an accessibility audit because the request was not an audit instruction. Ask me to audit a file or use /reports to open saved reports.",
+      });
+      return false;
+    }
+
+    const targets: Array<{ file: string; reason: string }> = Array.isArray(parsed.targetFiles)
+      ? parsed.targetFiles.filter(
+          (target: unknown): target is { file: string; reason: string } =>
+            Boolean(
+              target &&
+                typeof target === "object" &&
+                typeof (target as { file?: unknown }).file === "string"
+            )
+        )
+      : [];
+
+    if (targets.length === 0) {
+      this.todoList = [];
+      this.needsRuntime = false;
+      this.pushWorkflowTodos([]);
+      this.pushWorkflowState({
+        kind: "audit",
+        title: "Accessibility audit",
+        summary: "No auditable files were selected.",
+        status: "skipped",
+        scopeLabel: path.basename(rootPath),
+        detail:
+          reasoning ||
+          "The request looked like an audit, but no matching auditable files were identified.",
+      });
+      this.push("AGENT_MESSAGE", {
+        content:
+          responseMessage ||
+          "I could not identify any matching auditable files for that request. Name a file, component, folder, or explicitly ask for a whole-project audit.",
+      });
+      return false;
+    }
+
     this.needsRuntime = params.forceRuntime || false;
 
     this.todoList = targets.map(({ file, reason }) => {
@@ -427,14 +445,52 @@ Rules:
       return { file: fullPath, status: "pending" as const, reason };
     });
 
-    this.push("SYNC_TODO", { todos: this.todoList });
-    this.push("AGENT_MESSAGE", {
-      content: `Identified ${this.todoList.length} file(s) to audit. ${
-        this.needsRuntime
-          ? "Runtime analysis needed — will run wcag_mapper."
-          : "Runtime analysis already available from a previous run."
-      }\n\n${parsed.reasoning || ""}`,
+    const workflowTodos = this.buildWorkflowTodos(parsed.workflowTodos).map((todo) => {
+      if (todo.id !== "audit") {
+        return todo;
+      }
+
+      return {
+        ...todo,
+        detail:
+          todo.detail ||
+          `Audit ${this.todoList.length} selected file${this.todoList.length === 1 ? "" : "s"}.`,
+      };
     });
+
+    this.pushWorkflowTodos(workflowTodos);
+    this.push("SYNC_TODO", { todos: this.todoList });
+    this.pushWorkflowState({
+      kind: "audit",
+      title: "Accessibility audit",
+      summary: `Planning an audit across ${this.todoList.length} selected file${this.todoList.length === 1 ? "" : "s"}.`,
+      status: "analyzing",
+      scopeLabel: path.basename(rootPath),
+      detail: reasoning ||
+        (this.needsRuntime
+          ? "Runtime analysis will run because required data is not cached yet."
+          : "Runtime analysis will be skipped because cached data is already available."),
+    });
+    this.pushPhaseStatus(
+      "runtime",
+      this.needsRuntime ? "pending" : "done",
+      this.needsRuntime
+        ? "Runtime analysis queued"
+        : "Using cached runtime analysis"
+    );
+    this.pushPhaseStatus("audit", "pending", "Waiting to start file audit", {
+      completed: 0,
+      total: this.todoList.length,
+    });
+    this.pushPhaseStatus("validate", "pending", "Waiting for audited findings", {
+      completed: 0,
+      total: 0,
+    });
+    this.pushIntentSummary(
+      this.todoList.length,
+      this.needsRuntime ? "required" : "cached"
+    );
+    return true;
   }
 
   /* ================================================================ *
@@ -443,18 +499,31 @@ Rules:
   private async phaseRuntime(params: AgentParams): Promise<void> {
     if (!this.needsRuntime) {
       this.loadPersistedRuntimeResults();
-      this.push("AGENT_MESSAGE", {
-        content:
+      this.pushPhaseStatus(
+        "runtime",
+        "done",
+        this.pendingRuntimeResults.length > 0
+          ? `Reused ${this.pendingRuntimeResults.length} cached runtime issue(s)`
+          : "Reused cached runtime guideline mapping"
+      );
+      this.pushRuntimeUpdate(
+        "done",
+        this.pendingRuntimeResults.length > 0
+          ? `Skipping runtime analysis — reusing ${this.pendingRuntimeResults.length} cached runtime-verified contrast issue(s).`
+          : "Skipping runtime analysis — guidelines already mapped.",
+        [
           this.pendingRuntimeResults.length > 0
-            ? `Skipping runtime analysis — reusing ${this.pendingRuntimeResults.length} cached runtime-verified contrast issue(s).`
-            : "Skipping runtime analysis — guidelines already mapped.",
-      });
+            ? "Cached runtime-backed contrast findings are ready for validation."
+            : "Cached runtime guideline mapping is already available.",
+        ]
+      );
       return;
     }
 
-    this.push("AGENT_MESSAGE", {
-      content: "Running runtime analysis with wcag_mapper…",
-    });
+    this.pushPhaseStatus("runtime", "analyzing", "Running wcag_mapper");
+    this.pushRuntimeUpdate("analyzing", "Running runtime analysis...", [
+      "Launching wcag_mapper against the running project.",
+    ]);
     this.push("SET_PROGRESS", {
       percent: 5,
       label: "Starting runtime analysis…",
@@ -478,6 +547,10 @@ Rules:
       throw new Error(`wcag_mapper failed: ${result.error}`);
     }
 
+    this.pushRuntimeUpdate("analyzing", "Runtime scan finished. Mapping results...", [
+      "Applying scoped guideline mapping to the selected files.",
+    ]);
+
     clearProjectRuntimeAnalysis(this.projectId);
     this.contrastIssues = [];
     this.pendingRuntimeResults = [];
@@ -487,7 +560,6 @@ Rules:
       markFileRuntimeAnalyzed(fileId, true);
     }
 
-    // Persist only the runtime data that belongs to the files selected for this audit.
     const report = result.report!;
     const scopedFiles = report.files.filter((file) => {
       const fullPath = path.isAbsolute(file.path)
@@ -525,14 +597,24 @@ Rules:
       markFileRuntimeAnalyzed(fileId, true);
 
       for (const g of file.guidelines) {
-        if (isContrastGuideline(g.scId)) {
-          continue;
-        }
-
-        upsertGuideline(
+        if (isContrastGuideline(g.scId)) continue;
+        upsertApplicableGuideline(
           fileId,
           g.scId,
           `${g.title} [${g.category}] (Level ${g.level})`
+        );
+      }
+    }
+
+    for (const todo of this.todoList) {
+      if (!this.isStylesheetFile(todo.file)) continue;
+      const fileId = upsertFile(this.projectId, todo.file);
+
+      for (const guideline of STYLESHEET_FALLBACK_GUIDELINES) {
+        upsertApplicableGuideline(
+          fileId,
+          guideline.wcag_id,
+          guideline.description
         );
       }
     }
@@ -542,7 +624,6 @@ Rules:
       label: "Runtime analysis complete",
     });
 
-    // ── Extract and persist contrast failures as Verified Failures ──
     this.contrastIssues = extractContrastFailures(scopedReport);
 
     for (const ci of this.contrastIssues) {
@@ -551,12 +632,10 @@ Rules:
         : path.join(params.rootPath, ci.filePath);
       const fileId = upsertFile(this.projectId, fullPath);
 
-      // Mark the contrast guideline as failed (Source: Runtime)
-      upsertGuideline(
+      upsertApplicableGuideline(
         fileId,
         ci.guideline,
-        `Contrast failure verified by runtime engine [${ci.guideline}]`,
-        "failed"
+        `Contrast failure verified by runtime engine [${ci.guideline}]`
       );
 
       const resultId = insertAuditResult(
@@ -586,23 +665,35 @@ Rules:
       });
     }
 
-    this.push("AGENT_MESSAGE", {
-      content: `Runtime analysis complete — mapped **${scopedReport.summary.uniqueGuidelines}** guidelines across **${scopedReport.summary.files}** files (${scopedReport.summary.contrastFailures} contrast failures detected${this.contrastIssues.length > 0 ? " and stored as verified failures" : ""}).`,
-    });
+    this.pushRuntimeUpdate(
+      "done",
+      `Runtime analysis complete — mapped ${scopedReport.summary.uniqueGuidelines} guideline(s) across ${scopedReport.summary.files} file(s).`,
+      [
+        `${scopedReport.summary.contrastFailures} contrast failure(s) detected${
+          this.contrastIssues.length > 0 ? " and stored as verified failures." : "."
+        }`,
+      ]
+    );
+    this.pushPhaseStatus(
+      "runtime",
+      "done",
+      `Mapped ${scopedReport.summary.uniqueGuidelines} guideline(s) across ${scopedReport.summary.files} file(s)`
+    );
   }
 
   /* ================================================================ *
    *  Phase 3 – Granular Audit Loop (sequential, cached)               *
-   *                                                                   *
-   *  For each file:                                                   *
-   *    1. Prime LLM thread with the full file content.                *
-   *    2. For each applicable guideline, send a check request on the  *
-   *       same thread so the LLM can leverage cached context.         *
-   *    3. Persist every check result.                                 *
    * ================================================================ */
   private async phaseAudit(params: AgentParams): Promise<void> {
     const total = this.todoList.length;
     let processed = 0;
+
+    clearProjectLlmAuditResults(this.projectId);
+
+    this.pushPhaseStatus("audit", total > 0 ? "analyzing" : "done", total > 0 ? "Starting file audit" : "No files selected for audit", {
+      completed: 0,
+      total,
+    });
 
     for (let i = 0; i < total; i++) {
       const todo = this.todoList[i];
@@ -612,30 +703,63 @@ Rules:
         todo.status = "skipped";
         todo.reason = "File not registered in database";
         this.push("SYNC_TODO", { todos: [...this.todoList] });
+        this.pushAuditFileComplete({
+          filePath: todo.file,
+          guidelineTotal: 0,
+          status: "skipped",
+          summary: "Skipped — file was not registered in the database.",
+          passCount: 0,
+          failCount: 0,
+          naCount: 0,
+        });
         continue;
       }
 
-      // Pre-check: if no guidelines are mapped, skip the file
       const guidelines = this.getGuidelinesForAudit(fileId, todo.file);
+      const ignoredIds = new Set(getIgnoredGuidelines(fileId));
+      const guidelinesToCheck = guidelines.filter(
+        (guideline) => !ignoredIds.has(guideline.wcag_id)
+      );
+
       if (guidelines.length === 0) {
         todo.status = "skipped";
         todo.reason = this.isStylesheetFile(todo.file)
           ? "No applicable non-contrast stylesheet checks remain"
           : "Only runtime-managed contrast checks apply";
         this.push("SYNC_TODO", { todos: [...this.todoList] });
+        this.pushAuditFileComplete({
+          filePath: todo.file,
+          guidelineTotal: 0,
+          status: "skipped",
+          summary: todo.reason,
+          passCount: 0,
+          failCount: 0,
+          naCount: 0,
+        });
         continue;
       }
 
-      // Mark as scanning
+      if (guidelinesToCheck.length === 0) {
+        todo.status = "skipped";
+        todo.reason = "All applicable checks for this file are currently ignored";
+        this.push("SYNC_TODO", { todos: [...this.todoList] });
+        this.pushAuditFileComplete({
+          filePath: todo.file,
+          guidelineTotal: guidelines.length,
+          status: "skipped",
+          summary: todo.reason,
+          passCount: 0,
+          failCount: 0,
+          naCount: 0,
+        });
+        continue;
+      }
+
       todo.status = "scanning";
       this.push("SYNC_TODO", { todos: [...this.todoList] });
       updateFileStatus(fileId, "analyzing");
+      this.pushAuditFileStart(todo.file, i + 1, total, guidelinesToCheck.length);
 
-      this.push("AGENT_MESSAGE", {
-        content: `Auditing **${path.basename(todo.file)}** — ${guidelines.length} guideline(s) to check…`,
-      });
-
-      // Read file content
       let content: string;
       try {
         content = fs.readFileSync(todo.file, "utf-8");
@@ -644,94 +768,55 @@ Rules:
         todo.reason = "Cannot read file";
         updateFileStatus(fileId, "error");
         this.push("SYNC_TODO", { todos: [...this.todoList] });
+        this.pushAuditFileComplete({
+          filePath: todo.file,
+          guidelineTotal: guidelinesToCheck.length,
+          status: "error",
+          summary: "Unable to read file contents.",
+          passCount: 0,
+          failCount: 0,
+          naCount: 0,
+        });
         continue;
       }
 
       const basename = path.basename(todo.file);
       const threadId = `audit-${i}`;
+      const auditableInventory = extractAuditableElementInventory(content);
 
-      // ── Create thread, prime with file context ────────────────────
-      this.llm.createThread(
-        threadId,
-        `You are an expert WCAG 2.1 accessibility auditor. You will analyze source code for accessibility issues.
-
-IMPORTANT: Ignore any issues related to color contrast ratios (WCAG 1.4.3, 1.4.6, 1.4.11). Color contrast checks are handled by a separate deterministic engine and should NOT be evaluated by you.
-
-Workflow:
-1. You will first receive the full source code of a file to establish context.
-2. Then you will be asked to check specific WCAG guidelines one at a time.
-
-For each guideline check, respond with a JSON object:
-{
-  "status": "passed" | "failed" | "na",
-  "issues": [
-    {
-      "issueDescription": "Clear description of the accessibility problem",
-      "severity": "error" | "warning" | "info",
-      "lineNumber": 42,
-      "selector": "CSS selector or component identifier",
-      "snippet": "Relevant code snippet (max 3 lines)",
-      "suggestion": "Specific fix recommendation"
-    }
-  ]
-}
-
-Rules:
-- "passed": All checks for this guideline pass. issues must be empty.
-- "failed": At least one check fails. List every failing issue.
-- "na": This guideline is not applicable to this file. issues must be empty.
-- Be precise with line numbers and selectors.
-- Only report genuine issues, not theoretical concerns.
-- Do NOT report any contrast-related findings.`
-      );
-
-      // Prime the thread with the file content
+      this.llm.createThread(threadId, AUDIT_SYSTEM_PROMPT);
       await this.llm.send(
         threadId,
-        `Here is the source code of "${basename}" for analysis:\n\n\`\`\`\n${content}\n\`\`\`\n\nI will now ask you to check specific WCAG guidelines against this code one at a time. Acknowledge that you have cached this code context.`
+        buildFilePrimePrompt(basename, content, auditableInventory)
       );
 
-      // ── Sequential guideline checks on the same thread ────────────
-      const ignoredIds = new Set(getIgnoredGuidelines(fileId));
       let passCount = 0;
       let failCount = 0;
       let naCount = 0;
+      let checkedCount = 0;
 
-      for (const guideline of guidelines) {
-        if (ignoredIds.has(guideline.wcag_id)) continue;
-
-        const checkPrompt = `Check WCAG Guideline: **${guideline.wcag_id}** — ${guideline.description}
-
-Evaluate the code you already have against this specific success criterion. Consider all relevant checks.
-Respond with the JSON format specified in your instructions.`;
+      for (const guideline of guidelinesToCheck) {
+        let latestStatus: "passed" | "failed" | "na" = "passed";
 
         try {
-          const reply = await this.llm.send(threadId, checkPrompt, {
-            json: true,
-          });
+          const reply = await this.llm.send(
+            threadId,
+            buildGuidelineCheckPrompt(guideline.wcag_id, guideline.description),
+            { json: true }
+          );
           const result = JSON.parse(reply);
 
           if (result.status === "na") {
             naCount++;
+            latestStatus = "na";
           } else if (result.status === "passed") {
-            upsertGuideline(
-              fileId,
-              guideline.wcag_id,
-              guideline.description,
-              "passed"
-            );
             passCount++;
+            latestStatus = "passed";
           } else {
-            // failed
-            upsertGuideline(
-              fileId,
-              guideline.wcag_id,
-              guideline.description,
-              "failed"
-            );
             failCount++;
+            latestStatus = "failed";
 
-            const dedupedIssues = this.dedupeGuidelineIssues(result.issues || []);
+            const dedupedIssues = dedupeGuidelineIssues(result.issues || []);
 
             for (const issue of dedupedIssues) {
               const resultId = insertAuditResult(
@@ -765,12 +850,23 @@ Respond with the JSON format specified in your instructions.`;
             err.message
           );
         }
+
+        checkedCount++;
+        this.pushAuditGuidelineProgress({
+          filePath: todo.file,
+          guidelineId: guideline.wcag_id,
+          guidelineDescription: guideline.description,
+          guidelineIndex: checkedCount,
+          guidelineTotal: guidelinesToCheck.length,
+          latestStatus,
+          passCount,
+          failCount,
+          naCount,
+        });
       }
 
-      // Clean up the thread
       this.llm.dropThread(threadId);
 
-      // Score & mark file
       const total_checks = passCount + failCount + naCount;
       const score =
         total_checks > 0
@@ -781,9 +877,18 @@ Respond with the JSON format specified in your instructions.`;
       todo.status = "done";
       todo.reason = `Passed: ${passCount}, Failed: ${failCount}, N/A: ${naCount}`;
       this.push("SYNC_TODO", { todos: [...this.todoList] });
+      this.pushAuditFileComplete({
+        filePath: todo.file,
+        guidelineTotal: guidelinesToCheck.length,
+        status: "done",
+        summary: `Completed ${guidelinesToCheck.length} guideline check(s).`,
+        passCount,
+        failCount,
+        naCount,
+      });
 
       processed++;
-      const pct = 20 + Math.round((processed / total) * 55); // 20–75%
+      const pct = 20 + Math.round((processed / total) * 55);
       this.push("SET_PROGRESS", {
         percent: pct,
         label: `Audited ${processed}/${total} files`,
@@ -791,31 +896,46 @@ Respond with the JSON format specified in your instructions.`;
     }
 
     if (this.pendingRuntimeResults.length > 0) {
-      this.push("AGENT_MESSAGE", {
-        content: `Publishing ${this.pendingRuntimeResults.length} runtime-verified contrast issue(s) before validation…`,
-      });
-
       for (const result of this.pendingRuntimeResults) {
         this.push("NEW_AUDIT_RESULT", result);
       }
 
       this.pendingRuntimeResults = [];
     }
+
+    this.pushPhaseStatus("audit", "done", "File audit complete", {
+      completed: total,
+      total,
+    });
   }
 
   /* ================================================================ *
    *  Phase 4 – Final Validation (LLM-as-a-Judge)                     *
-   *                                                                   *
-   *  For each file that had failures, send a consolidation prompt     *
-   *  asking the LLM to validate findings and flag false positives.    *
    * ================================================================ */
   private async phaseValidate(params: AgentParams): Promise<void> {
-    this.push("AGENT_MESSAGE", {
-      content: "Running final validation (LLM-as-a-Judge)…",
-    });
-    this.push("SET_PROGRESS", { percent: 75, label: "Validating findings…" });
-
     const filesWithFailures = this.todoList.filter((t) => t.status === "done");
+    this.pushPhaseStatus(
+      "validate",
+      filesWithFailures.length > 0 ? "analyzing" : "done",
+      filesWithFailures.length > 0
+        ? "Running LLM-as-Judge validation"
+        : "No files required validation",
+      {
+        completed: 0,
+        total: filesWithFailures.length,
+      }
+    );
+    this.pushValidationUpdate(
+      filesWithFailures.length > 0 ? "analyzing" : "done",
+      filesWithFailures.length > 0
+        ? "Running final validation (LLM-as-a-Judge)."
+        : "No files required validation.",
+      {
+        completed: 0,
+        total: filesWithFailures.length,
+      }
+    );
+    this.push("SET_PROGRESS", { percent: 75, label: "Validating findings…" });
     let validated = 0;
 
     for (const todo of filesWithFailures) {
@@ -839,7 +959,6 @@ Respond with the JSON format specified in your instructions.`;
         continue;
       }
 
-      // Read file for context
       let content: string;
       try {
         content = fs.readFileSync(todo.file, "utf-8");
@@ -851,26 +970,7 @@ Respond with the JSON format specified in your instructions.`;
       const basename = path.basename(todo.file);
       const threadId = `validate-${validated}`;
 
-      this.llm.createThread(
-        threadId,
-        `You are a senior accessibility expert acting as a validation judge. Your role is to review accessibility audit findings and assess their accuracy.
-
-You must:
-1. Identify false positives — findings that are not actual WCAG violations.
-2. Provide a confidence assessment for each validated finding.
-3. Runtime-generated contrast findings are included alongside LLM findings. Do NOT recompute color ratios, but you may reject a runtime finding if the reported selector/snippet is clearly misattributed to this source file.
-4. Do NOT add new issues or suggest missed guidelines. Your only job is to validate or reject the findings already reported.
-
-Respond with a JSON object:
-{
-  "falsePositives": [
-    { "wcagId": "1.1.1", "reason": "Why this is not actually a violation" }
-  ],
-  "validated": [
-    { "wcagId": "1.3.1", "confidence": "high" | "medium" | "low" }
-  ]
-}`
-      );
+      this.llm.createThread(threadId, VALIDATE_SYSTEM_PROMPT);
 
       const failureList = failed
         .map((g) => `- ${g.wcag_id}: ${g.description}`)
@@ -889,30 +989,20 @@ Respond with a JSON object:
         .filter(Boolean)
         .join("\n");
 
-      const prompt = `Based on the following source code of "${basename}":
-
-\`\`\`
-${content}
-\`\`\`
-
-Here are the detected accessibility failures:
-${combinedFailureList}
-Validate these findings: identify if any are false positives. Do not add new issues or suggest missed guidelines. For runtime contrast findings, do not recompute color ratios; only judge whether the reported finding appears correctly attributed to this file and code context.`;
+      const prompt = buildValidatePrompt(basename, content, combinedFailureList);
+      this.pushValidationUpdate(
+        "analyzing",
+        `Validating ${basename}...`,
+        {
+          completed: validated,
+          total: filesWithFailures.length,
+        },
+        todo.file
+      );
 
       try {
         const reply = await this.llm.send(threadId, prompt, { json: true });
         const validation = JSON.parse(reply);
-
-        // Promote false positives back to "passed" (never override runtime contrast results)
-        for (const fp of validation.falsePositives || []) {
-          if (isContrastGuideline(fp.wcagId)) continue;
-          upsertGuideline(
-            fileId,
-            fp.wcagId,
-            fp.reason || "False positive (LLM-as-Judge)",
-            "passed"
-          );
-        }
 
         this.push("VALIDATION_RESULT", {
           filePath: todo.file,
@@ -928,6 +1018,28 @@ Validate these findings: identify if any are false positives. Do not add new iss
 
       this.llm.dropThread(threadId);
       validated++;
+      this.pushPhaseStatus(
+        "validate",
+        validated >= filesWithFailures.length ? "done" : "analyzing",
+        validated >= filesWithFailures.length
+          ? "Validation complete"
+          : `Validated ${validated} of ${filesWithFailures.length} files`,
+        {
+          completed: validated,
+          total: filesWithFailures.length,
+        }
+      );
+      this.pushValidationUpdate(
+        validated >= filesWithFailures.length ? "done" : "analyzing",
+        validated >= filesWithFailures.length
+          ? "Validation complete"
+          : `Validated ${validated} of ${filesWithFailures.length} files`,
+        {
+          completed: validated,
+          total: filesWithFailures.length,
+        },
+        todo.file
+      );
 
       const pct =
         75 +
@@ -935,6 +1047,17 @@ Validate these findings: identify if any are false positives. Do not add new iss
       this.push("SET_PROGRESS", {
         percent: Math.min(pct, 100),
         label: `Validated ${validated}/${filesWithFailures.length} files`,
+      });
+    }
+
+    if (filesWithFailures.length === 0) {
+      this.pushPhaseStatus("validate", "done", "No files required validation", {
+        completed: 0,
+        total: 0,
+      });
+      this.pushValidationUpdate("done", "No files required validation.", {
+        completed: 0,
+        total: 0,
       });
     }
   }

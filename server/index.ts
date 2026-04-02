@@ -6,11 +6,13 @@ import { AzureOpenAI } from "openai";
 import {
   initDatabase,
   ignoreIssue as dbIgnoreIssue,
+  getProjectAuditSnapshot,
 } from "./db";
 import { LLMClient } from "./LLMClient";
 import { ToolWrapper } from "./ToolWrapper";
 import { MainAgent } from "./MainAgent";
 import type { AgentEvent } from "./MainAgent";
+import { ReportService, ReportServiceNeedsUrlError } from "./ReportService";
 
 /* ------------------------------------------------------------------ *
  *  Parse Azure OpenAI credentials from API.txt                       *
@@ -63,12 +65,97 @@ initDatabase(dbDir);
  * ------------------------------------------------------------------ */
 const llmClient = new LLMClient(openai, DEPLOYMENT);
 const toolWrapper = new ToolWrapper(path.join(rootDir, "wcag-mapper"));
+const reportService = new ReportService(llmClient, toolWrapper);
 
 /* ------------------------------------------------------------------ *
  *  GET /health                                                        *
  * ------------------------------------------------------------------ */
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
+});
+
+/* ------------------------------------------------------------------ *
+ *  POST /reports/open                                                 *
+ *  Accepts: { filePath, rootPath, projectUrl? }                       *
+ * ------------------------------------------------------------------ */
+app.post("/reports/open", async (req, res) => {
+  try {
+    const { filePath, rootPath, projectUrl } = req.body;
+
+    if (!filePath || !rootPath) {
+      res.status(400).json({ error: "Missing required fields: filePath, rootPath" });
+      return;
+    }
+
+    const report = await reportService.retrieveOrInitiateAudit({
+      filePath,
+      rootPath,
+      projectUrl,
+    });
+
+    res.json({ report });
+  } catch (err) {
+    if (err instanceof ReportServiceNeedsUrlError) {
+      res.status(409).json({ error: err.message, needsUrl: true });
+      return;
+    }
+
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[reports/open] Error:", message);
+    res.status(500).json({ error: message });
+  }
+});
+
+/* ------------------------------------------------------------------ *
+ *  GET /reports/:id                                                   *
+ * ------------------------------------------------------------------ */
+app.get("/reports/:id", async (req, res) => {
+  try {
+    const reportId = Number(req.params.id);
+    if (!Number.isFinite(reportId)) {
+      res.status(400).json({ error: "Invalid report id" });
+      return;
+    }
+
+    const report = await reportService.getReportById(reportId);
+    if (!report) {
+      res.status(404).json({ error: "Report not found" });
+      return;
+    }
+
+    res.json({ report });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[reports/:id] Error:", message);
+    res.status(500).json({ error: message });
+  }
+});
+
+/* ------------------------------------------------------------------ *
+ *  POST /reports/project-snapshot                                     *
+ *  Accepts: { rootPath }                                              *
+ * ------------------------------------------------------------------ */
+app.post("/reports/project-snapshot", (req, res) => {
+  try {
+    const { rootPath } = req.body;
+
+    if (!rootPath) {
+      res.status(400).json({ error: "Missing required field: rootPath" });
+      return;
+    }
+
+    const files = getProjectAuditSnapshot(rootPath);
+    res.json({
+      projectPath: rootPath,
+      projectName: path.basename(rootPath),
+      createdAt: new Date().toISOString(),
+      files,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[reports/project-snapshot] Error:", message);
+    res.status(500).json({ error: message });
+  }
 });
 
 /* ------------------------------------------------------------------ *

@@ -45,6 +45,7 @@ const db_1 = require("./db");
 const LLMClient_1 = require("./LLMClient");
 const ToolWrapper_1 = require("./ToolWrapper");
 const MainAgent_1 = require("./MainAgent");
+const ReportService_1 = require("./ReportService");
 /* ------------------------------------------------------------------ *
  *  Parse Azure OpenAI credentials from API.txt                       *
  * ------------------------------------------------------------------ */
@@ -88,11 +89,88 @@ const dbDir = process.env.CODEA11Y_DB_DIR || rootDir;
  * ------------------------------------------------------------------ */
 const llmClient = new LLMClient_1.LLMClient(openai, DEPLOYMENT);
 const toolWrapper = new ToolWrapper_1.ToolWrapper(path.join(rootDir, "wcag-mapper"));
+const reportService = new ReportService_1.ReportService(llmClient, toolWrapper);
 /* ------------------------------------------------------------------ *
  *  GET /health                                                        *
  * ------------------------------------------------------------------ */
 app.get("/health", (_req, res) => {
     res.json({ status: "ok" });
+});
+/* ------------------------------------------------------------------ *
+ *  POST /reports/open                                                 *
+ *  Accepts: { filePath, rootPath, projectUrl? }                       *
+ * ------------------------------------------------------------------ */
+app.post("/reports/open", async (req, res) => {
+    try {
+        const { filePath, rootPath, projectUrl } = req.body;
+        if (!filePath || !rootPath) {
+            res.status(400).json({ error: "Missing required fields: filePath, rootPath" });
+            return;
+        }
+        const report = await reportService.retrieveOrInitiateAudit({
+            filePath,
+            rootPath,
+            projectUrl,
+        });
+        res.json({ report });
+    }
+    catch (err) {
+        if (err instanceof ReportService_1.ReportServiceNeedsUrlError) {
+            res.status(409).json({ error: err.message, needsUrl: true });
+            return;
+        }
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("[reports/open] Error:", message);
+        res.status(500).json({ error: message });
+    }
+});
+/* ------------------------------------------------------------------ *
+ *  GET /reports/:id                                                   *
+ * ------------------------------------------------------------------ */
+app.get("/reports/:id", async (req, res) => {
+    try {
+        const reportId = Number(req.params.id);
+        if (!Number.isFinite(reportId)) {
+            res.status(400).json({ error: "Invalid report id" });
+            return;
+        }
+        const report = await reportService.getReportById(reportId);
+        if (!report) {
+            res.status(404).json({ error: "Report not found" });
+            return;
+        }
+        res.json({ report });
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("[reports/:id] Error:", message);
+        res.status(500).json({ error: message });
+    }
+});
+/* ------------------------------------------------------------------ *
+ *  POST /reports/project-snapshot                                     *
+ *  Accepts: { rootPath }                                              *
+ * ------------------------------------------------------------------ */
+app.post("/reports/project-snapshot", (req, res) => {
+    try {
+        const { rootPath } = req.body;
+        if (!rootPath) {
+            res.status(400).json({ error: "Missing required field: rootPath" });
+            return;
+        }
+        const files = (0, db_1.getProjectAuditSnapshot)(rootPath);
+        res.json({
+            projectPath: rootPath,
+            projectName: path.basename(rootPath),
+            createdAt: new Date().toISOString(),
+            files,
+        });
+    }
+    catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        console.error("[reports/project-snapshot] Error:", message);
+        res.status(500).json({ error: message });
+    }
 });
 /* ------------------------------------------------------------------ *
  *  POST /agent/start                                                  *

@@ -1,14 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type {
-  TodoItem,
+  ChatActivityItem,
   ChatMessage,
+  ChatTranscriptItem,
   ExtensionToWebviewMessage,
+  TodoItem,
+  TodoStatus,
 } from "../../shared/messages";
 import { getVsCodeApi, onExtensionMessage } from "../shared/vscodeApi";
-
-/* ===================================================================
- *  Props for ChatView (receives context from SidebarApp)
- * =================================================================== */
 
 interface ChatViewProps {
   chatId: string;
@@ -17,11 +16,7 @@ interface ChatViewProps {
   onTitleChanged: (chatId: string, newTitle: string) => void;
 }
 
-/* ===================================================================
- *  Active Tasks (TO-DO) Panel – collapsible
- * =================================================================== */
-
-const statusIcon: Record<TodoItem["status"], string> = {
+const statusIcon: Record<TodoStatus, string> = {
   pending: "codicon-circle-outline",
   analyzing: "codicon-loading codicon-modifier-spin",
   done: "codicon-check",
@@ -29,45 +24,122 @@ const statusIcon: Record<TodoItem["status"], string> = {
   skipped: "codicon-circle-slash",
 };
 
-function ActiveTasksPanel({ tasks }: { tasks: TodoItem[] }) {
+const statusToneClass: Record<TodoStatus, string> = {
+  pending: "opacity-70",
+  analyzing: "text-vscode-button-bg",
+  done: "text-green-400",
+  error: "text-red-400",
+  skipped: "opacity-60",
+};
+
+function TodoPanel({ tasks }: { tasks: TodoItem[] }) {
   const [open, setOpen] = useState(true);
 
   return (
-    <div className="border-b border-vscode-border">
-      {/* header / toggle */}
+    <section className="mx-3 rounded-2xl border border-vscode-border bg-vscode-editor-background">
       <button
-        className="flex w-full items-center justify-between px-3 py-2
-                   text-xs font-semibold uppercase tracking-wide
-                   hover:bg-vscode-list-hover transition-colors"
-        onClick={() => setOpen((o) => !o)}
+        className="flex w-full items-center justify-between px-3 py-2 text-xs font-semibold uppercase tracking-wide hover:bg-vscode-list-hover transition-colors"
+        onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
       >
-        <span>Active Tasks ({tasks.length})</span>
+        <span>Workflow Todos ({tasks.length})</span>
         <span
-          className={`codicon ${
-            open ? "codicon-chevron-up" : "codicon-chevron-down"
-          }`}
+          className={`codicon ${open ? "codicon-chevron-up" : "codicon-chevron-down"}`}
         />
       </button>
 
-      {/* collapsible body */}
-      <div
-        className="collapsible-content"
-        data-state={open ? "open" : "closed"}
-      >
+      <div className="collapsible-content" data-state={open ? "open" : "closed"}>
         {tasks.length === 0 ? (
-          <p className="px-3 py-2 text-xs opacity-60">No active tasks</p>
+          <p className="px-3 py-2 text-xs opacity-60">No workflow todos</p>
         ) : (
-          <ul className="list-none m-0 p-0">
-            {tasks.map((t) => (
-              <li
-                key={t.filePath}
-                className="flex items-center gap-2 px-3 py-1.5 text-xs"
-              >
-                <span className={`codicon ${statusIcon[t.status]}`} />
-                <span className="truncate flex-1">
-                  {t.message ?? t.filePath}
+          <ul className="m-0 list-none p-0">
+            {tasks.map((task) => (
+              <li key={task.id} className="flex items-start gap-2 px-3 py-2 text-xs">
+                <span className={`codicon mt-0.5 ${statusIcon[task.status]}`} />
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate font-medium">{task.title}</span>
+                    {task.countLabel && (
+                      <span className="shrink-0 opacity-70">{task.countLabel}</span>
+                    )}
+                  </div>
+                  {task.detail && (
+                    <p className="mb-0 mt-0.5 truncate opacity-70">{task.detail}</p>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  );
+}
+
+function MessageBubble({ msg }: { msg: ChatMessage }) {
+  const isUser = msg.role === "user";
+
+  return (
+    <div className={isUser ? "ml-10" : "mr-6"}>
+      <div
+        className={`rounded-xl px-3 py-2 text-sm whitespace-pre-wrap ${
+          isUser ? "bg-vscode-input-bg" : "border border-vscode-border"
+        }`}
+      >
+        <span className="mb-1 block text-[11px] font-semibold uppercase tracking-wide opacity-60">
+          {isUser ? "You" : "Codea11y"}
+        </span>
+        {msg.content}
+        {msg.isStreaming && <span className="ml-1 inline-block animate-pulse">▌</span>}
+      </div>
+    </div>
+  );
+}
+
+function ActivityCard({
+  item,
+  collapsed,
+  onToggle,
+}: {
+  item: ChatActivityItem;
+  collapsed: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <div className="mr-6 rounded-xl border border-vscode-border bg-vscode-input-bg">
+      <button
+        className="flex w-full items-start gap-3 px-3 py-3 text-left hover:bg-vscode-list-hover transition-colors"
+        onClick={onToggle}
+        aria-expanded={!collapsed}
+      >
+        <span className={`codicon mt-0.5 ${statusIcon[item.status]} ${statusToneClass[item.status]}`} />
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="truncate text-sm font-semibold">{item.heading}</div>
+              <div className="mt-0.5 text-xs opacity-65">Codea11y</div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              {item.countLabel && (
+                <span className="rounded-full border border-vscode-border px-2 py-0.5 text-[11px] opacity-75">
+                  {item.countLabel}
                 </span>
+              )}
+              <span
+                className={`codicon ${collapsed ? "codicon-chevron-down" : "codicon-chevron-up"}`}
+              />
+            </div>
+          </div>
+        </div>
+      </button>
+
+      <div className="collapsible-content px-3 pb-3" data-state={collapsed ? "closed" : "open"}>
+        {item.summary && <p className="m-0 text-sm opacity-85">{item.summary}</p>}
+        {item.lines.length > 0 && (
+          <ul className="m-0 mt-2 list-none space-y-1 p-0 text-xs opacity-75">
+            {item.lines.map((line) => (
+              <li key={line.id} className="leading-5">
+                {line.text}
               </li>
             ))}
           </ul>
@@ -77,141 +149,113 @@ function ActiveTasksPanel({ tasks }: { tasks: TodoItem[] }) {
   );
 }
 
-/* ===================================================================
- *  Progress bar
- * =================================================================== */
-
-function ProgressBar({
-  percent,
-  label,
-}: {
-  percent: number;
-  label: string;
-}) {
-  if (percent <= 0) return null;
-
-  return (
-    <div className="px-3 py-2 border-b border-vscode-border">
-      <div className="flex items-center justify-between text-xs mb-1">
-        <span>{label}</span>
-        <span>{Math.round(percent)}%</span>
-      </div>
-      <div className="h-1 w-full rounded bg-vscode-input-bg overflow-hidden">
-        <div
-          className="h-full bg-vscode-button-bg transition-all duration-300"
-          style={{ width: `${Math.min(percent, 100)}%` }}
-        />
-      </div>
-    </div>
-  );
+function upsertTranscriptItem<T extends ChatTranscriptItem>(
+  items: ChatTranscriptItem[],
+  nextItem: T
+): ChatTranscriptItem[] {
+  const index = items.findIndex((item) => item.id === nextItem.id);
+  if (index >= 0) {
+    const updated = [...items];
+    updated[index] = nextItem;
+    return updated;
+  }
+  return [...items, nextItem];
 }
-
-/* ===================================================================
- *  Chat message bubble
- * =================================================================== */
-
-function MessageBubble({ msg }: { msg: ChatMessage }) {
-  const isUser = msg.role === "user";
-  return (
-    <div
-      className={`px-3 py-2 text-sm whitespace-pre-wrap ${
-        isUser ? "bg-vscode-input-bg rounded-lg ml-8" : "mr-8"
-      }`}
-    >
-      <span className="font-semibold text-xs block mb-0.5 opacity-70">
-        {isUser ? "You" : "Codea11y"}
-      </span>
-      {msg.content}
-      {msg.isStreaming && (
-        <span className="inline-block ml-1 animate-pulse">▌</span>
-      )}
-    </div>
-  );
-}
-
-/* ===================================================================
- *  Main ChatView
- * =================================================================== */
 
 export default function ChatView({ chatId, chatTitle, onBack, onTitleChanged }: ChatViewProps) {
   const vscodeApi = getVsCodeApi();
 
   const [tasks, setTasks] = useState<TodoItem[]>([]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [progress, setProgress] = useState({ percent: 0, label: "" });
+  const [transcript, setTranscript] = useState<ChatTranscriptItem[]>([]);
+  const [collapsedCards, setCollapsedCards] = useState<Record<string, boolean>>({});
   const [input, setInput] = useState("");
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(chatTitle);
   const titleInputRef = useRef<HTMLInputElement>(null);
-
   const bottomRef = useRef<HTMLDivElement>(null);
 
-  // ── Listen for extension messages ─────────────────────────────
   useEffect(() => {
     return onExtensionMessage((msg: ExtensionToWebviewMessage) => {
       switch (msg.type) {
+        case "UPDATE_WORKFLOW":
+          break;
         case "UPDATE_TODO":
           setTasks(msg.payload);
           break;
-        case "STREAM_CHAT":
-          setMessages((prev) => {
-            const idx = prev.findIndex((m) => m.id === msg.payload.id);
-            if (idx >= 0) {
-              const updated = [...prev];
-              updated[idx] = msg.payload;
-              return updated;
+        case "RESET_CHAT_ACTIVITY":
+          setTranscript((prev) => prev.filter((item) => item.kind === "message"));
+          setCollapsedCards({});
+          break;
+        case "UPSERT_CHAT_ACTIVITY": {
+          let previousStatus: TodoStatus | undefined;
+          setTranscript((prev) => {
+            const existing = prev.find((item) => item.id === msg.payload.id);
+            if (existing && existing.kind === "activity") {
+              previousStatus = existing.status;
             }
-            return [...prev, msg.payload];
+            return upsertTranscriptItem(prev, msg.payload);
+          });
+          setCollapsedCards((prev) => {
+            if (prev[msg.payload.id] !== undefined) {
+              return prev;
+            }
+
+            const shouldCollapse =
+              msg.payload.autoCollapseOnDone &&
+              ["done", "error", "skipped"].includes(msg.payload.status) &&
+              previousStatus !== msg.payload.status;
+
+            return shouldCollapse ? { ...prev, [msg.payload.id]: true } : prev;
           });
           break;
-        case "SET_PROGRESS":
-          setProgress(msg.payload);
+        }
+        case "STREAM_CHAT":
+          setTranscript((prev) => upsertTranscriptItem(prev, msg.payload));
           break;
         case "CHAT_OPENED":
-          // Load history when a chat is opened
           if (msg.payload.chatId === chatId) {
-            setMessages(msg.payload.messages);
+            setTranscript(msg.payload.messages);
+            setCollapsedCards({});
           }
           break;
       }
     });
   }, [chatId]);
 
-  // ── Auto-scroll on new messages ───────────────────────────────
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [transcript]);
 
-  // ── Send query ────────────────────────────────────────────────
   const handleSend = useCallback(() => {
     const trimmed = input.trim();
-    if (!trimmed) return;
+    if (!trimmed) {
+      return;
+    }
 
-    // Optimistically show the user message
-    const userMsg: ChatMessage = {
+    const userMessage: ChatMessage = {
+      kind: "message",
       id: `user-${Date.now()}`,
       role: "user",
       content: trimmed,
     };
-    setMessages((prev) => [...prev, userMsg]);
+
+    setTranscript((prev) => [...prev, userMessage]);
     setInput("");
-
     vscodeApi.postMessage({ type: "SEND_QUERY", payload: { query: trimmed, chatId } });
-  }, [input, vscodeApi, chatId]);
+  }, [chatId, input, vscodeApi]);
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
       handleSend();
     }
   };
 
   return (
-    <div className="flex flex-col h-screen">
-      {/* ── Chat Header with back button & editable title ───────── */}
-      <div className="flex items-center gap-2 px-3 py-2 border-b border-vscode-border">
+    <div className="flex h-screen flex-col">
+      <div className="flex items-center gap-2 border-b border-vscode-border px-3 py-2">
         <button
-          className="shrink-0 p-1 rounded hover:bg-vscode-list-hover transition-colors"
+          className="shrink-0 rounded p-1 hover:bg-vscode-list-hover transition-colors"
           onClick={onBack}
           title="Back to chat list"
         >
@@ -221,12 +265,9 @@ export default function ChatView({ chatId, chatTitle, onBack, onTitleChanged }: 
         {isEditing ? (
           <input
             ref={titleInputRef}
-            className="flex-1 text-sm font-semibold m-0 bg-vscode-input-bg
-                       text-vscode-input-fg border border-vscode-input-border
-                       rounded px-1.5 py-0.5 outline-none
-                       focus:border-vscode-button-bg"
+            className="m-0 flex-1 rounded border border-vscode-input-border bg-vscode-input-bg px-1.5 py-0.5 text-sm font-semibold text-vscode-input-fg outline-none focus:border-vscode-button-bg"
             value={editTitle}
-            onChange={(e) => setEditTitle(e.target.value)}
+            onChange={(event) => setEditTitle(event.target.value)}
             onBlur={() => {
               const trimmed = editTitle.trim();
               if (trimmed && trimmed !== chatTitle) {
@@ -237,16 +278,23 @@ export default function ChatView({ chatId, chatTitle, onBack, onTitleChanged }: 
               }
               setIsEditing(false);
             }}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") (e.target as HTMLInputElement).blur();
-              if (e.key === "Escape") { setEditTitle(chatTitle); setIsEditing(false); }
+            onKeyDown={(event) => {
+              if (event.key === "Enter") {
+                (event.target as HTMLInputElement).blur();
+              }
+              if (event.key === "Escape") {
+                setEditTitle(chatTitle);
+                setIsEditing(false);
+              }
             }}
           />
         ) : (
           <h2
-            className="text-sm font-semibold m-0 truncate flex-1 cursor-pointer
-                       hover:opacity-70 transition-opacity"
-            onClick={() => { setIsEditing(true); setTimeout(() => titleInputRef.current?.select(), 0); }}
+            className="m-0 flex-1 cursor-pointer truncate text-sm font-semibold hover:opacity-70 transition-opacity"
+            onClick={() => {
+              setIsEditing(true);
+              setTimeout(() => titleInputRef.current?.select(), 0);
+            }}
             title="Click to rename"
           >
             {chatTitle}
@@ -254,52 +302,57 @@ export default function ChatView({ chatId, chatTitle, onBack, onTitleChanged }: 
         )}
 
         <button
-          className="shrink-0 p-1 rounded opacity-50 hover:opacity-100
-                     hover:bg-vscode-list-hover transition-all"
-          onClick={() => { setIsEditing(true); setTimeout(() => titleInputRef.current?.select(), 0); }}
+          className="shrink-0 rounded p-1 opacity-50 hover:bg-vscode-list-hover hover:opacity-100 transition-all"
+          onClick={() => {
+            setIsEditing(true);
+            setTimeout(() => titleInputRef.current?.select(), 0);
+          }}
           title="Rename chat"
         >
           <span className="codicon codicon-edit" />
         </button>
       </div>
 
-      {/* ── Progress ────────────────────────────────────────────── */}
-      <ProgressBar percent={progress.percent} label={progress.label} />
-
-      {/* ── Message List ────────────────────────────────────────── */}
-      <div className="flex-1 overflow-y-auto space-y-3 py-3">
-        {messages.length === 0 && (
-          <p className="px-3 text-sm opacity-50 text-center mt-8">
+      <div className="flex-1 space-y-3 overflow-y-auto py-3">
+        {transcript.length === 0 && (
+          <p className="mt-8 px-3 text-center text-sm opacity-50">
             Ask a question about accessibility…
           </p>
         )}
-        {messages.map((m) => (
-          <MessageBubble key={m.id} msg={m} />
-        ))}
+
+        {transcript.map((item) =>
+          item.kind === "message" ? (
+            <MessageBubble key={item.id} msg={item} />
+          ) : (
+            <ActivityCard
+              key={item.id}
+              item={item}
+              collapsed={collapsedCards[item.id] ?? false}
+              onToggle={() =>
+                setCollapsedCards((prev) => ({
+                  ...prev,
+                  [item.id]: !(prev[item.id] ?? false),
+                }))
+              }
+            />
+          )
+        )}
         <div ref={bottomRef} />
       </div>
 
-      {/* Active Tasks Panel (above input) */}
-      <ActiveTasksPanel tasks={tasks} />
+      <TodoPanel tasks={tasks} />
 
-      {/* Input Area */}
-      <div className="border-t border-vscode-border p-2 flex gap-2 items-end">
+      <div className="flex items-end gap-2 border-t border-vscode-border p-2">
         <textarea
-          className="flex-1 resize-none rounded border border-vscode-input-border
-                     bg-vscode-input-bg text-vscode-input-fg px-2 py-1.5
-                     text-sm outline-none focus:border-vscode-button-bg
-                     min-h-[36px] max-h-[120px]"
+          className="min-h-[36px] max-h-[120px] flex-1 resize-none rounded border border-vscode-input-border bg-vscode-input-bg px-2 py-1.5 text-sm text-vscode-input-fg outline-none focus:border-vscode-button-bg"
           rows={1}
           placeholder="Ask about WCAG compliance…"
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(event) => setInput(event.target.value)}
           onKeyDown={handleKeyDown}
         />
         <button
-          className="px-3 py-1.5 rounded text-sm font-medium
-                     bg-vscode-button-bg text-vscode-button-fg
-                     hover:bg-vscode-button-hover transition-colors
-                     disabled:opacity-40"
+          className="rounded bg-vscode-button-bg px-3 py-1.5 text-sm font-medium text-vscode-button-fg hover:bg-vscode-button-hover transition-colors disabled:opacity-40"
           disabled={!input.trim()}
           onClick={handleSend}
         >

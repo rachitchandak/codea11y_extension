@@ -75,6 +75,6 @@ body {
   opacity: 0;
 }
 .collapsible-content[data-state="open"] {
-  max-height: 300px;
+  max-height: 1200px;
   opacity: 1;
 }

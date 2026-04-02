@@ -1,88 +1,220 @@
 import * as vscode from "vscode";
-import * as cp from "child_process";
-import * as path from "path";
 import { SidebarProvider } from "./providers/SidebarProvider";
 import {
   openReportPanel,
   postToReportPanel,
   onIgnoreIssue,
 } from "./providers/ReportPanelProvider";
-import { buildFileTree } from "./ProjectScanner";
+import { buildFileTree, FileTreeNode } from "./ProjectScanner";
+import {
+  startServer,
+  waitForServer,
+  ignoreIssueOnServer,
+  killServer,
+  getProjectAuditSnapshot,
+  retrieveOrInitiateReport,
+  ServerNeedsUrlError,
+} from "./serverClient";
+import type {
+  AuditResult,
+  ChatMessage,
+  ProjectReportReadyPayload,
+  ReportFileEntry,
+  ReportIssueGroup,
+  Severity,
+} from "./shared/messages";
+import { handleAgentEvent, resetChatActivityState, resetSidebarTodoState } from "./eventHandler";
+import {
+  buildComponentGroupKey,
+  buildIssueMergeKey,
+  getComponentGroupLabel,
+  mergeIssues,
+  normalizeGuidelineLabel,
+  sanitizeIssueSnippet,
+  severityRank,
+} from "./webview/shared/issueUtils";
 
-let serverProcess: cp.ChildProcess | undefined;
-
-/* ------------------------------------------------------------------ *
- *  Start the local proxy server as a child process                    *
- * ------------------------------------------------------------------ */
-function startServer(extensionPath: string): Promise<void> {
-  const serverScript = path.join(extensionPath, "dist", "server", "index.js");
-
-  return new Promise((resolve, reject) => {
-    serverProcess = cp.spawn("node", [serverScript], {
-      cwd: extensionPath,
-      env: {
-        ...process.env,
-        CODEA11Y_PORT: "7544",
-        CODEA11Y_ROOT: extensionPath,
-        CODEA11Y_DB_DIR: extensionPath,
-      },
-      stdio: ["pipe", "pipe", "pipe"],
-    });
-
-    serverProcess.stdout?.on("data", (data: Buffer) => {
-      const msg = data.toString();
-      console.log("[codea11y-server]", msg);
-      if (msg.includes("running on")) {
-        resolve();
-      }
-    });
-
-    serverProcess.stderr?.on("data", (data: Buffer) => {
-      console.error("[codea11y-server]", data.toString());
-    });
-
-    serverProcess.on("error", (err) => {
-      reject(new Error(`Failed to start server: ${err.message}`));
-    });
-
-    serverProcess.on("exit", (code) => {
-      if (code !== null && code !== 0) {
-        reject(new Error(`Server exited with code ${code}`));
-      }
-    });
-
-    // Timeout safety net
-    setTimeout(() => reject(new Error("Server startup timeout")), 15_000);
-  });
+function normalizePath(value: string): string {
+  return value.replace(/\\/g, "/");
 }
 
-/* ------------------------------------------------------------------ *
- *  Poll /health until the server is ready                             *
- * ------------------------------------------------------------------ */
-async function waitForServer(retries = 20, delay = 500): Promise<void> {
-  for (let i = 0; i < retries; i++) {
-    try {
-      const res = await fetch("http://localhost:7544/health");
-      if (res.ok) return;
-    } catch {
-      // not ready yet
+function flattenAuditableFiles(node: FileTreeNode, rootPath: string): string[] {
+  if (node.type === "file") {
+    return [normalizePath(vscode.Uri.joinPath(vscode.Uri.file(rootPath), node.relativePath).fsPath)];
+  }
+
+  return (node.children || []).flatMap((child) => flattenAuditableFiles(child, rootPath));
+}
+
+function normalizeReportIssue(issue: AuditResult): AuditResult {
+  return {
+    ...issue,
+    filePath: normalizePath(issue.filePath),
+    guideline: normalizeGuidelineLabel(issue.guideline),
+    snippet: sanitizeIssueSnippet(issue.snippet),
+  };
+}
+
+function buildGroupedIssues(results: AuditResult[]): ReportIssueGroup[] {
+  const mergedResults = new Map<string, AuditResult>();
+
+  for (const issue of results) {
+    const mergeKey = buildIssueMergeKey(issue);
+    const existing = mergedResults.get(mergeKey);
+    mergedResults.set(mergeKey, existing ? mergeIssues(existing, issue) : issue);
+  }
+
+  const groups = new Map<string, ReportIssueGroup>();
+
+  for (const issue of mergedResults.values()) {
+    const key = buildComponentGroupKey(issue);
+    const existing = groups.get(key);
+
+    if (!existing) {
+      groups.set(key, {
+        key,
+        filePath: issue.filePath,
+        lineNumber: issue.lineNumber,
+        selector: issue.selector,
+        label: getComponentGroupLabel(issue),
+        issues: [issue],
+      });
+      continue;
     }
-    await new Promise((r) => setTimeout(r, delay));
+
+    existing.issues.push(issue);
+    if (existing.lineNumber === undefined) {
+      existing.lineNumber = issue.lineNumber;
+    }
+    if (!existing.selector && issue.selector) {
+      existing.selector = issue.selector;
+    }
   }
-  throw new Error("Server did not become ready in time");
+
+  return [...groups.values()].map((group) => ({
+    ...group,
+    issues: [...group.issues].sort((left, right) => {
+      const severityDiff = severityRank(right.severity) - severityRank(left.severity);
+      if (severityDiff !== 0) return severityDiff;
+      const guidelineDiff = normalizeGuidelineLabel(left.guideline).localeCompare(
+        normalizeGuidelineLabel(right.guideline)
+      );
+      if (guidelineDiff !== 0) return guidelineDiff;
+      return String(left.id).localeCompare(String(right.id));
+    }),
+  }));
 }
 
-async function ignoreIssueOnServer(issueId: string): Promise<void> {
-  const res = await fetch("http://localhost:7544/ignore-issue", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ issueId }),
+function buildSeverityCounts(results: AuditResult[]): Record<Severity, number> {
+  return results.reduce(
+    (acc, result) => {
+      if (!result.ignored) {
+        acc[result.severity] += 1;
+      }
+      return acc;
+    },
+    { error: 0, warning: 0, info: 0 } as Record<Severity, number>
+  );
+}
+
+function isAuditedFile(file: {
+  scanStatus: string;
+  accessibilityScore: number | null;
+  results: AuditResult[];
+}): boolean {
+  return (
+    file.scanStatus !== "pending" ||
+    file.accessibilityScore !== null ||
+    file.results.length > 0
+  );
+}
+
+function createAssistantMessage(content: string): ChatMessage {
+  return {
+    kind: "message",
+    id: crypto.randomUUID(),
+    role: "assistant",
+    content,
+    isStreaming: false,
+  };
+}
+
+function buildProjectReportPayload(args: {
+  projectPath: string;
+  projectName: string;
+  createdAt: string;
+  auditableFiles: string[];
+  snapshotFiles: Array<{
+    filePath: string;
+    scanStatus: string;
+    runtimeAnalyzed: boolean;
+    accessibilityScore: number | null;
+    results: AuditResult[];
+  }>;
+}): ProjectReportReadyPayload {
+  const normalizedAuditableFiles = args.auditableFiles.map(normalizePath).sort((left, right) =>
+    left.localeCompare(right)
+  );
+
+  const auditedFiles = args.snapshotFiles
+    .map((file) => ({
+      ...file,
+      filePath: normalizePath(file.filePath),
+      results: file.results.map(normalizeReportIssue),
+    }))
+    .filter(isAuditedFile)
+    .sort((left, right) => left.filePath.localeCompare(right.filePath));
+
+  const fileTabs = auditedFiles.map((file) => {
+    const groupedIssues = buildGroupedIssues(file.results);
+    const issueCount = file.results.filter((issue) => !issue.ignored).length;
+
+    return {
+      filePath: file.filePath,
+      issueCount,
+      accessibilityScore: file.accessibilityScore,
+      scanStatus: file.scanStatus,
+      runtimeAnalyzed: file.runtimeAnalyzed,
+      results: file.results,
+      groupedIssues,
+      fileEntries: [{ filePath: file.filePath, issueCount }] as ReportFileEntry[],
+      counts: buildSeverityCounts(file.results),
+    };
   });
 
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Failed to ignore issue: ${body}`);
-  }
+  const auditedSet = new Set(fileTabs.map((tab) => normalizePath(tab.filePath)));
+  const unauditedFiles = normalizedAuditableFiles.filter((filePath) => !auditedSet.has(filePath));
+  const scoredFiles = fileTabs.filter((tab) => typeof tab.accessibilityScore === "number");
+  const averageAccessibilityScore =
+    scoredFiles.length > 0
+      ? Math.round(
+          scoredFiles.reduce((sum, tab) => sum + (tab.accessibilityScore || 0), 0) /
+            scoredFiles.length
+        )
+      : null;
+
+  return {
+    kind: "project",
+    reportId: `project:${args.projectPath}`,
+    projectPath: args.projectPath,
+    projectName: args.projectName,
+    createdAt: args.createdAt,
+    source: "snapshot",
+    overview: {
+      totalAuditableFiles: normalizedAuditableFiles.length,
+      auditedFileCount: fileTabs.length,
+      unauditedFileCount: unauditedFiles.length,
+      averageAccessibilityScore,
+      auditedFiles: fileTabs.map((tab) => ({
+        filePath: tab.filePath,
+        issueCount: tab.issueCount,
+        accessibilityScore: tab.accessibilityScore,
+        scanStatus: tab.scanStatus,
+      })),
+      unauditedFiles,
+    },
+    fileTabs,
+  };
 }
 
 /* ================================================================== *
@@ -117,15 +249,8 @@ export async function activate(context: vscode.ExtensionContext) {
     }
     const rootPath = workspaceFolder.uri.fsPath;
 
-    sidebarProvider.postMessage({
-      type: "STREAM_CHAT",
-      payload: {
-        id: crypto.randomUUID(),
-        role: "assistant",
-        content: `Starting agent-driven accessibility audit for: "${query}"`,
-        isStreaming: false,
-      },
-    });
+    resetSidebarTodoState(sidebarProvider);
+    resetChatActivityState(sidebarProvider);
 
     openReportPanel(context.extensionUri);
     postToReportPanel({ type: "RESET_REPORT", payload: undefined });
@@ -158,7 +283,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split("\n");
-        buffer = lines.pop()!; // keep last incomplete line
+        buffer = lines.pop()!;
 
         for (const line of lines) {
           if (!line.trim()) continue;
@@ -167,7 +292,7 @@ export async function activate(context: vscode.ExtensionContext) {
               event: string;
               data: Record<string, unknown>;
             };
-            handleAgentEvent(evt, query);
+            handleAgentEvent(evt, query, sidebarProvider, runAgentAudit);
           } catch {
             // skip malformed lines
           }
@@ -180,6 +305,7 @@ export async function activate(context: vscode.ExtensionContext) {
       sidebarProvider.postMessage({
         type: "STREAM_CHAT",
         payload: {
+          kind: "message",
           id: crypto.randomUUID(),
           role: "assistant",
           content: `Audit failed: ${err.message}`,
@@ -189,92 +315,120 @@ export async function activate(context: vscode.ExtensionContext) {
     }
   }
 
-  // ── Handle NDJSON events from the MainAgent stream ────────────────
-  function handleAgentEvent(
-    evt: { event: string; data: Record<string, unknown> },
-    query: string
-  ) {
-    switch (evt.event) {
-      case "SYNC_TODO": {
-        const todos = (evt.data as any).todos || [];
-        sidebarProvider.postMessage({
-          type: "UPDATE_TODO",
-          payload: todos.map((t: any) => ({
-            filePath: t.file,
-            status: t.status === "scanning" ? "analyzing" : t.status,
-            message: t.reason,
-            reason: t.reason,
-          })),
-        });
-        break;
-      }
-      case "AGENT_MESSAGE": {
-        sidebarProvider.postMessage({
-          type: "STREAM_CHAT",
-          payload: {
-            id: crypto.randomUUID(),
-            role: "assistant",
-            content: String((evt.data as any).content || ""),
-            isStreaming: false,
-          },
-        });
-        break;
-      }
-      case "NEW_AUDIT_RESULT": {
-        postToReportPanel({
-          type: "NEW_AUDIT_RESULT",
-          payload: evt.data as any,
-        });
-        break;
-      }
-      case "SET_PROGRESS": {
-        const msg = {
-          type: "SET_PROGRESS" as const,
-          payload: evt.data as { percent: number; label: string },
-        };
-        sidebarProvider.postMessage(msg);
-        postToReportPanel(msg);
-        break;
-      }
-      case "NEED_URL": {
-        vscode.window
-          .showInputBox({
-            prompt: String(
-              (evt.data as any).message ||
-                "Provide the URL where your project is running"
-            ),
-            placeHolder: "http://localhost:3000",
+  async function openActiveFileReport(projectUrl?: string): Promise<void> {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    const activeFilePath = vscode.window.activeTextEditor?.document.uri.fsPath;
+
+    if (!workspaceFolder) {
+      vscode.window.showErrorMessage("Codea11y: No workspace folder open.");
+      return;
+    }
+
+    if (!activeFilePath) {
+      vscode.window.showErrorMessage(
+        "Codea11y: Open a source file to retrieve or generate its report."
+      );
+      return;
+    }
+
+    openReportPanel(context.extensionUri);
+    postToReportPanel({ type: "RESET_REPORT", payload: undefined });
+
+    try {
+      const report = await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: "Codea11y: Opening accessibility report",
+        },
+        async () =>
+          retrieveOrInitiateReport({
+            filePath: activeFilePath,
+            rootPath: workspaceFolder.uri.fsPath,
+            projectUrl,
           })
-          .then((url) => {
-            if (url) {
-              runAgentAudit(query, url);
-            }
-          });
-        break;
-      }
-      case "VALIDATION_RESULT": {
-        postToReportPanel({
-          type: "VALIDATION_RESULT" as any,
-          payload: evt.data as any,
+      );
+
+      postToReportPanel({
+        type: "REPORT_READY",
+        payload: report,
+      });
+    } catch (err) {
+      if (err instanceof ServerNeedsUrlError) {
+        const url = await vscode.window.showInputBox({
+          prompt: err.message,
+          placeHolder: "http://localhost:3000",
         });
-        break;
+
+        if (url) {
+          await openActiveFileReport(url);
+        }
+        return;
       }
-      case "DONE": {
-        vscode.window.showInformationMessage("Codea11y: Audit complete!");
-        break;
-      }
-      case "ERROR": {
-        vscode.window.showWarningMessage(
-          `Codea11y: ${(evt.data as any).message || "Unknown error"}`
-        );
-        break;
-      }
+
+      const message = err instanceof Error ? err.message : String(err);
+      vscode.window.showErrorMessage(`Codea11y: Failed to open report - ${message}`);
+    }
+  }
+
+  async function openProjectReports(): Promise<void> {
+    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
+    if (!workspaceFolder) {
+      vscode.window.showErrorMessage("Codea11y: No workspace folder open.");
+      return;
+    }
+
+    const rootPath = workspaceFolder.uri.fsPath;
+    const fileTree = buildFileTree(rootPath);
+    const auditableFiles = flattenAuditableFiles(fileTree, rootPath);
+
+    try {
+      const snapshot = await vscode.window.withProgress(
+        {
+          location: vscode.ProgressLocation.Notification,
+          title: "Codea11y: Opening project reports",
+        },
+        async () => getProjectAuditSnapshot(rootPath)
+      );
+
+      const reportPayload = buildProjectReportPayload({
+        projectPath: snapshot.projectPath,
+        projectName: snapshot.projectName,
+        createdAt: snapshot.createdAt,
+        auditableFiles,
+        snapshotFiles: snapshot.files,
+      });
+
+      openReportPanel(context.extensionUri);
+      postToReportPanel({ type: "RESET_REPORT", payload: undefined });
+      postToReportPanel({
+        type: "REPORT_READY",
+        payload: reportPayload,
+      });
+
+      sidebarProvider.postMessage({
+        type: "STREAM_CHAT",
+        payload: createAssistantMessage(
+          `Opened project reports for ${reportPayload.overview.auditedFileCount} audited file${reportPayload.overview.auditedFileCount === 1 ? "" : "s"}.`
+        ),
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      vscode.window.showErrorMessage(`Codea11y: Failed to open project reports - ${message}`);
+      sidebarProvider.postMessage({
+        type: "STREAM_CHAT",
+        payload: createAssistantMessage(`Project reports failed: ${message}`),
+      });
     }
   }
 
   // ── Wire SEND_QUERY → agent audit flow ────────────────────────────
   sidebarProvider.onSendQuery = (query: string, _chatId: string) => {
-    runAgentAudit(query);
+    if (/^\/reports?\b/i.test(query.trim())) {
+      void openProjectReports();
+      return;
+    }
+
+    void runAgentAudit(query);
   };
 
   // ── Wire IGNORE_ISSUE → server ───────────────────────────────────
@@ -294,7 +448,7 @@ export async function activate(context: vscode.ExtensionContext) {
   // ── Open Report Panel command ─────────────────────────────────────
   context.subscriptions.push(
     vscode.commands.registerCommand("codea11y.openReport", () => {
-      openReportPanel(context.extensionUri);
+      void openActiveFileReport();
     })
   );
 
@@ -315,13 +469,11 @@ export async function activate(context: vscode.ExtensionContext) {
   // ── Dispose server on deactivation ────────────────────────────────
   context.subscriptions.push({
     dispose() {
-      serverProcess?.kill();
-      serverProcess = undefined;
+      killServer();
     },
   });
 }
 
 export function deactivate() {
-  serverProcess?.kill();
-  serverProcess = undefined;
+  killServer();
 }

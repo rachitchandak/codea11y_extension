@@ -5,4 +5,3 @@ export interface FileTreeNode {
     children?: FileTreeNode[];
 }
 export declare function buildFileTree(rootPath: string): FileTreeNode;
-export declare function flattenFiles(node: FileTreeNode, rootPath: string): string[];

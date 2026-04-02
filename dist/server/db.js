@@ -43,17 +43,23 @@ exports.upsertFile = upsertFile;
 exports.updateFileStatus = updateFileStatus;
 exports.markFileRuntimeAnalyzed = markFileRuntimeAnalyzed;
 exports.hasFileRuntimeAnalysis = hasFileRuntimeAnalysis;
-exports.upsertGuideline = upsertGuideline;
+exports.upsertApplicableGuideline = upsertApplicableGuideline;
 exports.getIgnoredGuidelines = getIgnoredGuidelines;
 exports.getFileId = getFileId;
-exports.getActiveGuidelines = getActiveGuidelines;
-exports.getFileGuidelines = getFileGuidelines;
-exports.updateGuidelineStatus = updateGuidelineStatus;
+exports.getApplicableGuidelines = getApplicableGuidelines;
 exports.getFailedGuidelines = getFailedGuidelines;
 exports.clearProjectRuntimeAnalysis = clearProjectRuntimeAnalysis;
+exports.clearProjectLlmAuditResults = clearProjectLlmAuditResults;
+exports.clearAuditResultsForFiles = clearAuditResultsForFiles;
+exports.clearApplicableGuidelinesForFiles = clearApplicableGuidelinesForFiles;
 exports.insertAuditResult = insertAuditResult;
 exports.getAuditResultsBySource = getAuditResultsBySource;
+exports.getProjectAuditSnapshot = getProjectAuditSnapshot;
 exports.ignoreIssue = ignoreIssue;
+exports.insertStoredReport = insertStoredReport;
+exports.getLatestStoredReportByFilePath = getLatestStoredReportByFilePath;
+exports.getLatestStoredReportsByProjectRootPath = getLatestStoredReportsByProjectRootPath;
+exports.getStoredReportById = getStoredReportById;
 const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
 const path = __importStar(require("path"));
 let db;
@@ -96,6 +102,27 @@ function initDatabase(dbDir) {
       UNIQUE(file_id, wcag_id)
     );
 
+    CREATE TABLE IF NOT EXISTS applicable_guidelines (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      file_id     INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+      wcag_id     TEXT NOT NULL,
+      description TEXT NOT NULL,
+      UNIQUE(file_id, wcag_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS ignored_guidelines (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      file_id     INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
+      wcag_id     TEXT NOT NULL,
+      created_at  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      UNIQUE(file_id, wcag_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS schema_meta (
+      key         TEXT PRIMARY KEY,
+      value       TEXT NOT NULL
+    );
+
     CREATE TABLE IF NOT EXISTS audit_results (
       id                INTEGER PRIMARY KEY AUTOINCREMENT,
       file_id           INTEGER NOT NULL REFERENCES files(id) ON DELETE CASCADE,
@@ -109,6 +136,19 @@ function initDatabase(dbDir) {
       ignored           INTEGER DEFAULT 0,
       source            TEXT NOT NULL DEFAULT 'llm'
     );
+
+    CREATE TABLE IF NOT EXISTS reports (
+      id                          INTEGER PRIMARY KEY AUTOINCREMENT,
+      project_id                  INTEGER REFERENCES projects(id) ON DELETE CASCADE,
+      file_path                   TEXT NOT NULL,
+      file_hash                   TEXT NOT NULL,
+      overall_accessibility_score REAL NOT NULL,
+      created_at                  TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      payload_json                TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_reports_file_path_created_at
+      ON reports(file_path, created_at DESC, id DESC);
   `);
     // Migration: add `source` column for databases created before this change
     const cols = db
@@ -122,6 +162,24 @@ function initDatabase(dbDir) {
         .all();
     if (!auditResultCols.some((c) => c.name === "source")) {
         db.exec("ALTER TABLE audit_results ADD COLUMN source TEXT NOT NULL DEFAULT 'llm'");
+    }
+    // One-time migration for splitting runtime applicability from user ignores.
+    const splitMigration = db
+        .prepare("SELECT value FROM schema_meta WHERE key = 'guideline_split_v1'")
+        .get();
+    if (!splitMigration) {
+        db.exec(`
+      INSERT OR IGNORE INTO ignored_guidelines (file_id, wcag_id)
+      SELECT file_id, wcag_id
+      FROM guidelines
+      WHERE status = 'ignored';
+
+      DELETE FROM applicable_guidelines;
+      UPDATE files SET runtime_analyzed = 0;
+
+      INSERT INTO schema_meta (key, value)
+      VALUES ('guideline_split_v1', 'done');
+    `);
     }
     return db;
 }
@@ -177,17 +235,17 @@ function hasFileRuntimeAnalysis(fileId) {
     return row?.runtime_analyzed === 1;
 }
 /* ------------------------------------------------------------------ *
- *  Guideline helpers                                                  *
+ *  Applicable guideline helpers                                       *
  * ------------------------------------------------------------------ */
-function upsertGuideline(fileId, wcagId, description, status = "active") {
+function upsertApplicableGuideline(fileId, wcagId, description) {
     getDb()
-        .prepare(`INSERT INTO guidelines (file_id, wcag_id, description, status) VALUES (?, ?, ?, ?)
-       ON CONFLICT(file_id, wcag_id) DO UPDATE SET description = excluded.description, status = excluded.status`)
-        .run(fileId, wcagId, description, status);
+        .prepare(`INSERT INTO applicable_guidelines (file_id, wcag_id, description) VALUES (?, ?, ?)
+       ON CONFLICT(file_id, wcag_id) DO UPDATE SET description = excluded.description`)
+        .run(fileId, wcagId, description);
 }
 function getIgnoredGuidelines(fileId) {
     const rows = getDb()
-        .prepare("SELECT wcag_id FROM guidelines WHERE file_id = ? AND status = 'ignored'")
+        .prepare("SELECT wcag_id FROM ignored_guidelines WHERE file_id = ?")
         .all(fileId);
     return rows.map((r) => r.wcag_id);
 }
@@ -197,24 +255,23 @@ function getFileId(projectId, filePath) {
         .get(projectId, filePath);
     return row?.id ?? null;
 }
-function getActiveGuidelines(fileId) {
+function getApplicableGuidelines(fileId) {
     return getDb()
-        .prepare("SELECT wcag_id, description FROM guidelines WHERE file_id = ? AND status NOT IN ('ignored', 'na')")
+        .prepare("SELECT wcag_id, description FROM applicable_guidelines WHERE file_id = ?")
         .all(fileId);
-}
-function getFileGuidelines(fileId) {
-    return getDb()
-        .prepare("SELECT wcag_id, description, status FROM guidelines WHERE file_id = ?")
-        .all(fileId);
-}
-function updateGuidelineStatus(fileId, wcagId, status) {
-    getDb()
-        .prepare("UPDATE guidelines SET status = ? WHERE file_id = ? AND wcag_id = ?")
-        .run(status, fileId, wcagId);
 }
 function getFailedGuidelines(fileId) {
     return getDb()
-        .prepare("SELECT wcag_id, description FROM guidelines WHERE file_id = ? AND status = 'failed'")
+        .prepare(`SELECT DISTINCT ar.guideline AS wcag_id,
+              COALESCE(ag.description, ar.guideline, '') AS description
+       FROM audit_results ar
+       LEFT JOIN applicable_guidelines ag
+         ON ag.file_id = ar.file_id
+        AND ag.wcag_id = ar.guideline
+       WHERE ar.file_id = ?
+         AND ar.source = 'llm'
+         AND ar.ignored = 0
+         AND ar.guideline IS NOT NULL`)
         .all(fileId);
 }
 function clearProjectRuntimeAnalysis(projectId) {
@@ -224,14 +281,39 @@ function clearProjectRuntimeAnalysis(projectId) {
          AND file_id IN (SELECT id FROM files WHERE project_id = ?)`)
         .run(projectId);
     getDb()
-        .prepare(`DELETE FROM guidelines
-       WHERE file_id IN (SELECT id FROM files WHERE project_id = ?)
-         AND (
-           wcag_id LIKE '%1.4.3%'
-           OR wcag_id LIKE '%1.4.6%'
-           OR wcag_id LIKE '%1.4.11%'
-         )`)
+        .prepare(`DELETE FROM applicable_guidelines
+       WHERE file_id IN (SELECT id FROM files WHERE project_id = ?)`)
         .run(projectId);
+}
+function clearProjectLlmAuditResults(projectId) {
+    getDb()
+        .prepare(`DELETE FROM audit_results
+       WHERE source = 'llm'
+         AND file_id IN (SELECT id FROM files WHERE project_id = ?)`)
+        .run(projectId);
+}
+function clearAuditResultsForFiles(fileIds, source) {
+    if (fileIds.length === 0)
+        return;
+    const placeholders = fileIds.map(() => "?").join(", ");
+    const params = [...fileIds];
+    const sourceClause = source ? " AND source = ?" : "";
+    if (source) {
+        params.push(source);
+    }
+    getDb()
+        .prepare(`DELETE FROM audit_results
+       WHERE file_id IN (${placeholders})${sourceClause}`)
+        .run(...params);
+}
+function clearApplicableGuidelinesForFiles(fileIds) {
+    if (fileIds.length === 0)
+        return;
+    const placeholders = fileIds.map(() => "?").join(", ");
+    getDb()
+        .prepare(`DELETE FROM applicable_guidelines
+       WHERE file_id IN (${placeholders})`)
+        .run(...fileIds);
 }
 /* ------------------------------------------------------------------ *
  *  Audit result helpers                                               *
@@ -310,6 +392,63 @@ function getAuditResultsBySource(fileId, source) {
        ORDER BY id ASC`)
         .all(fileId, source);
 }
+function getProjectAuditSnapshot(rootPath) {
+    const rows = getDb()
+        .prepare(`SELECT f.id AS file_id,
+              f.path AS file_path,
+              f.scan_status,
+              f.runtime_analyzed,
+              f.accessibility_score,
+              ar.id AS issue_id,
+              ar.issue_description,
+              ar.guideline,
+              ar.severity,
+              ar.line_number,
+              ar.selector,
+              ar.snippet,
+              ar.suggestion,
+              ar.ignored,
+              ar.source
+       FROM files f
+       INNER JOIN projects p ON p.id = f.project_id
+       LEFT JOIN audit_results ar ON ar.file_id = f.id
+       WHERE p.root_path = ?
+       ORDER BY f.path ASC, ar.id ASC`)
+        .all(rootPath);
+    const files = new Map();
+    for (const row of rows) {
+        let file = files.get(row.file_id);
+        if (!file) {
+            file = {
+                filePath: row.file_path,
+                scanStatus: row.scan_status,
+                runtimeAnalyzed: row.runtime_analyzed === 1,
+                accessibilityScore: typeof row.accessibility_score === "number"
+                    ? row.accessibility_score
+                    : null,
+                results: [],
+            };
+            files.set(row.file_id, file);
+        }
+        if (row.issue_id === null) {
+            continue;
+        }
+        file.results.push({
+            id: String(row.issue_id),
+            filePath: row.file_path,
+            guideline: row.guideline || "Unknown guideline",
+            severity: row.severity || "warning",
+            source: row.source || undefined,
+            snippet: row.snippet || "",
+            ignored: row.ignored === 1,
+            lineNumber: row.line_number ?? undefined,
+            selector: row.selector || undefined,
+            suggestion: row.suggestion || undefined,
+            issueDescription: row.issue_description || undefined,
+        });
+    }
+    return [...files.values()];
+}
 function severityRank(severity) {
     return SEVERITY_RANK[String(severity || "warning").toLowerCase()] || 0;
 }
@@ -328,15 +467,21 @@ function choosePreferredText(primary, secondary) {
 function isDuplicateAuditResultCandidate(row, issueDescription, lineNumber, selector, snippet) {
     const existingSelector = normalizeAuditText(row.selector);
     const incomingSelector = normalizeAuditText(selector);
-    if (row.line_number !== null || lineNumber !== null || existingSelector || incomingSelector) {
-        return row.line_number === lineNumber && existingSelector === incomingSelector;
-    }
     const existingSnippet = normalizeAuditText(row.snippet);
     const incomingSnippet = normalizeAuditText(snippet);
-    if (existingSnippet || incomingSnippet) {
-        return existingSnippet === incomingSnippet;
+    const existingDescription = normalizeAuditText(row.issue_description);
+    const incomingDescription = normalizeAuditText(issueDescription);
+    if (row.line_number !== null || lineNumber !== null || existingSelector || incomingSelector) {
+        return (row.line_number === lineNumber &&
+            existingSelector === incomingSelector &&
+            existingSnippet === incomingSnippet &&
+            existingDescription === incomingDescription);
     }
-    return normalizeAuditText(row.issue_description) === normalizeAuditText(issueDescription);
+    if (existingSnippet || incomingSnippet) {
+        return (existingSnippet === incomingSnippet &&
+            existingDescription === incomingDescription);
+    }
+    return existingDescription === incomingDescription;
 }
 function ignoreIssue(auditResultId) {
     const row = getDb()
@@ -348,13 +493,150 @@ function ignoreIssue(auditResultId) {
     getDb()
         .prepare("UPDATE audit_results SET ignored = 1 WHERE id = ?")
         .run(auditResultId);
-    // If the result references a guideline, mark it ignored for future audits
+    // If the result references a guideline, persist the ignore separately from applicability.
     if (row.guideline) {
         getDb()
-            .prepare(`INSERT INTO guidelines (file_id, wcag_id, description, status)
-         VALUES (?, ?, 'Ignored by user', 'ignored')
-         ON CONFLICT(file_id, wcag_id) DO UPDATE SET status = 'ignored'`)
+            .prepare(`INSERT INTO ignored_guidelines (file_id, wcag_id)
+         VALUES (?, ?)
+         ON CONFLICT(file_id, wcag_id) DO NOTHING`)
             .run(row.file_id, row.guideline);
+    }
+    syncIgnoredIssueInReports(auditResultId);
+}
+function mapStoredReportRow(row) {
+    const payload = JSON.parse(row.payload_json);
+    return {
+        ...payload,
+        reportId: String(row.id),
+        filePath: row.file_path,
+        fileHash: row.file_hash,
+        createdAt: row.created_at,
+        overallAccessibilityScore: row.overall_accessibility_score,
+    };
+}
+function insertStoredReport(args) {
+    const row = getDb()
+        .prepare(`INSERT INTO reports (
+         project_id,
+         file_path,
+         file_hash,
+         overall_accessibility_score,
+         payload_json
+       )
+       VALUES (?, ?, ?, ?, ?)
+       RETURNING id, project_id, file_path, file_hash, overall_accessibility_score, created_at, payload_json`)
+        .get(args.projectId, args.filePath, args.fileHash, args.overallAccessibilityScore, JSON.stringify({
+        ...args.payload,
+        source: args.payload.source || "generated",
+    }));
+    return mapStoredReportRow(row);
+}
+function getLatestStoredReportByFilePath(filePath) {
+    const row = getDb()
+        .prepare(`SELECT id,
+              project_id,
+              file_path,
+              file_hash,
+              overall_accessibility_score,
+              created_at,
+              payload_json
+       FROM reports
+       WHERE file_path = ?
+       ORDER BY created_at DESC, id DESC
+       LIMIT 1`)
+        .get(filePath);
+    return row ? mapStoredReportRow(row) : null;
+}
+function getLatestStoredReportsByProjectRootPath(rootPath) {
+    const rows = getDb()
+        .prepare(`SELECT r.id,
+              r.project_id,
+              r.file_path,
+              r.file_hash,
+              r.overall_accessibility_score,
+              r.created_at,
+              r.payload_json
+       FROM reports r
+       INNER JOIN projects p ON p.id = r.project_id
+       INNER JOIN (
+         SELECT file_path, MAX(id) AS latest_id
+         FROM reports
+         WHERE project_id = (SELECT id FROM projects WHERE root_path = ?)
+         GROUP BY file_path
+       ) latest ON latest.latest_id = r.id
+       WHERE p.root_path = ?
+       ORDER BY r.file_path ASC`)
+        .all(rootPath, rootPath);
+    return rows.map(mapStoredReportRow);
+}
+function getStoredReportById(reportId) {
+    const row = getDb()
+        .prepare(`SELECT id,
+              project_id,
+              file_path,
+              file_hash,
+              overall_accessibility_score,
+              created_at,
+              payload_json
+       FROM reports
+       WHERE id = ?`)
+        .get(reportId);
+    return row ? mapStoredReportRow(row) : null;
+}
+function syncIgnoredIssueInReports(auditResultId) {
+    const rows = getDb()
+        .prepare("SELECT id, payload_json FROM reports")
+        .all();
+    for (const row of rows) {
+        let payload;
+        try {
+            payload = JSON.parse(row.payload_json);
+        }
+        catch {
+            continue;
+        }
+        let changed = false;
+        const nextResults = (payload.results || []).map((result) => {
+            if (String(result.id) !== String(auditResultId) || result.ignored) {
+                return result;
+            }
+            changed = true;
+            return {
+                ...result,
+                ignored: true,
+            };
+        });
+        if (!changed) {
+            continue;
+        }
+        const nextGroupedIssues = (payload.groupedIssues || []).map((group) => ({
+            ...group,
+            issues: group.issues.map((issue) => String(issue.id) === String(auditResultId)
+                ? { ...issue, ignored: true }
+                : issue),
+        }));
+        const nextFileEntries = (payload.fileEntries || []).map((entry) => ({
+            ...entry,
+            issueCount: nextResults.filter((result) => result.filePath === entry.filePath && !result.ignored).length,
+        }));
+        const nextCounts = nextResults.reduce((acc, result) => {
+            if (!result.ignored) {
+                const severity = String(result.severity || "warning").toLowerCase();
+                if (severity === "error" || severity === "warning" || severity === "info") {
+                    acc[severity] += 1;
+                }
+            }
+            return acc;
+        }, { error: 0, warning: 0, info: 0 });
+        getDb()
+            .prepare("UPDATE reports SET payload_json = ? WHERE id = ?")
+            .run(JSON.stringify({
+            ...payload,
+            results: nextResults,
+            groupedIssues: nextGroupedIssues,
+            fileEntries: nextFileEntries,
+            counts: nextCounts,
+        }), row.id);
     }
 }
 //# sourceMappingURL=db.js.map

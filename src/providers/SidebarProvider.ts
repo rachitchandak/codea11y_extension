@@ -3,6 +3,7 @@ import type {
   WebviewToExtensionMessage,
   ExtensionToWebviewMessage,
 } from "../shared/messages";
+import { getNonce } from "./getNonce";
 
 /**
  * Provides the sidebar chat webview (WebviewViewProvider).
@@ -83,6 +84,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     this.postMessage({
       type: "STREAM_CHAT",
       payload: {
+        kind: "message",
         id: crypto.randomUUID(),
         role: "assistant",
         content: `Received your query: "${query}" in chat ${chatId}. LLM integration pending.`,
@@ -188,17 +190,4 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 </body>
 </html>`;
   }
-}
-
-/* -------------------------------------------------------------------- *
- *  Utility: generate a random nonce for the CSP                        *
- * -------------------------------------------------------------------- */
-function getNonce(): string {
-  const possible =
-    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  let nonce = "";
-  for (let i = 0; i < 32; i++) {
-    nonce += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return nonce;
 }

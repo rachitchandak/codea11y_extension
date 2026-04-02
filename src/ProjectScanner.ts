@@ -99,23 +99,3 @@ function walkDir(
 
   return node;
 }
-
-/* ------------------------------------------------------------------ *
- *  Flatten a file tree into an array of absolute paths                *
- * ------------------------------------------------------------------ */
-export function flattenFiles(
-  node: FileTreeNode,
-  rootPath: string
-): string[] {
-  const files: string[] = [];
-
-  if (node.type === "file") {
-    files.push(path.join(rootPath, node.relativePath));
-  }
-
-  for (const child of node.children ?? []) {
-    files.push(...flattenFiles(child, rootPath));
-  }
-
-  return files;
-}
