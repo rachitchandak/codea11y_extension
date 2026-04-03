@@ -1,8 +1,9 @@
 import React, { useState, useCallback, useEffect } from "react";
-import type { ExtensionToWebviewMessage } from "../../shared/messages";
+import type { AuthStatePayload, ExtensionToWebviewMessage } from "../../shared/messages";
 import { getVsCodeApi, onExtensionMessage } from "../shared/vscodeApi";
 import ChatListView from "./ChatListView";
 import ChatView from "./ChatView";
+import LoginView from "./LoginView";
 
 /* ===================================================================
  *  SidebarApp — top-level router between Chat List and Chat views
@@ -15,11 +16,25 @@ type Screen =
 export default function SidebarApp() {
   const vscodeApi = getVsCodeApi();
   const [screen, setScreen] = useState<Screen>({ view: "list" });
+  const [authState, setAuthState] = useState<AuthStatePayload>({
+    status: "checking",
+    serverBaseUrl: "",
+  });
+
+  useEffect(() => {
+    vscodeApi.postMessage({ type: "GET_AUTH_STATE" });
+  }, [vscodeApi]);
 
   // ── Listen for CHAT_OPENED / CHAT_RENAMED ────────────────────────
   useEffect(() => {
     return onExtensionMessage((msg: ExtensionToWebviewMessage) => {
-      if (msg.type === "CHAT_OPENED") {
+      if (msg.type === "AUTH_STATE") {
+        setAuthState(msg.payload);
+        if (msg.payload.status !== "authenticated") {
+          setScreen({ view: "list" });
+        }
+      }
+      if (msg.type === "CHAT_OPENED" && authState.status === "authenticated") {
         setScreen({
           view: "chat",
           chatId: msg.payload.chatId,
@@ -32,7 +47,18 @@ export default function SidebarApp() {
         );
       }
     });
-  }, [screen]);
+  }, [authState.status, screen]);
+
+  const handleLogin = useCallback(
+    (email: string, password: string) => {
+      vscodeApi.postMessage({ type: "LOGIN_REQUEST", payload: { email, password } });
+    },
+    [vscodeApi]
+  );
+
+  const handleLogout = useCallback(() => {
+    vscodeApi.postMessage({ type: "LOGOUT" });
+  }, [vscodeApi]);
 
   // ── Navigation callbacks ──────────────────────────────────────
   const handleOpenChat = useCallback(
@@ -63,6 +89,10 @@ export default function SidebarApp() {
     []
   );
 
+  if (authState.status !== "authenticated") {
+    return <LoginView authState={authState} onLogin={handleLogin} />;
+  }
+
   // ── Render ────────────────────────────────────────────────────
   if (screen.view === "chat") {
     return (
@@ -76,6 +106,6 @@ export default function SidebarApp() {
   }
 
   return (
-    <ChatListView onOpenChat={handleOpenChat} onNewChat={handleNewChat} />
+    <ChatListView onOpenChat={handleOpenChat} onNewChat={handleNewChat} onLogout={handleLogout} />
   );
 }

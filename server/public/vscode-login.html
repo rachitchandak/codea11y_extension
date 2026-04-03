@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CodeA11y Portal - Sign in to access VS Code extension">
+    <title>Sign In to VS Code | CodeA11y Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Ensure hidden class has high specificity to fix visibility bug */
+        .hidden {
+            display: none !important;
+        }
+
+        /* Success Icon - simplified */
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(34, 197, 94, 0.1);
+            color: #4ade80;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+            font-size: 32px;
+        }
+
+        .success-icon svg {
+            width: 32px;
+            height: 32px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="center-container" style="max-width: 420px; margin-top: 10vh;">
+        <!-- Login Form -->
+        <div id="login-view">
+            <div class="logo">
+                <h1>CodeA11y</h1>
+                <p>Login to authorize <span id="subtitle-editor-name">VS Code</span></p>
+            </div>
+
+            <div id="alert" class="msg-box hidden"></div>
+
+            <form id="signinForm">
+                <div class="form-group">
+                    <label class="form-label" for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-input" placeholder="you@example.com"
+                        required autocomplete="email">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-input" placeholder="••••••••"
+                        required autocomplete="current-password">
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" id="submitBtn">
+                    <span id="btnText">Sign In</span>
+                    <span id="btnSpinner" class="spinner hidden"></span>
+                </button>
+            </form>
+
+            <div class="links">
+                <a href="register.html">Create an account</a>
+            </div>
+        </div>
+
+        <div id="success-view" class="success-container hidden text-center">
+            <div class="success-icon">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+            </div>
+            <h2 class="auth-title">Authorized!</h2>
+            <p class="auth-subtitle">Redirecting you back to <span id="success-editor-name">your editor</span>...</p>
+
+            <p class="text-muted mt-md" style="font-size: 0.9rem;">
+                If it doesn't open automatically:
+            </p>
+
+            <div class="mt-md">
+                <a href="#" id="manual-redirect-link" class="btn btn-primary">
+                    Open <span id="link-editor-name">Editor</span>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('signinForm');
+        const alert = document.getElementById('alert');
+        const submitBtn = document.getElementById('submitBtn');
+        const btnText = document.getElementById('btnText');
+        const btnSpinner = document.getElementById('btnSpinner');
+        const loginView = document.getElementById('login-view');
+        const successView = document.getElementById('success-view');
+        const manualRedirectLink = document.getElementById('manual-redirect-link');
+
+        function showAlert(message, type) {
+            alert.textContent = message;
+            alert.className = `msg-box msg-${type}`; // Uses style.css msg-box
+            alert.classList.remove('hidden');
+            alert.style.display = 'block'; // Ensure display block if .hidden is removed
+        }
+
+        function setLoading(loading) {
+            submitBtn.disabled = loading;
+            if (loading) {
+                btnText.innerHTML = 'Signing in...';
+            } else {
+                btnText.innerHTML = 'Sign In';
+            }
+            btnSpinner.classList.toggle('hidden', !loading);
+        }
+
+        // Allowlist of valid editor schemes to prevent XSS attacks
+        const VALID_EDITOR_SCHEMES = new Set([
+            'vscode', 'vscode-insiders', 'cursor', 'antigravity', 'vscodium', 'windsurf'
+        ]);
+
+        function getEditorScheme() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const scheme = (urlParams.get('editor') || 'vscode').toLowerCase();
+
+            if (!VALID_EDITOR_SCHEMES.has(scheme)) {
+                console.warn(`Invalid editor scheme "${scheme}", defaulting to vscode`);
+                return 'vscode';
+            }
+            return scheme;
+        }
+
+        function getEditorDisplayName(scheme) {
+            const names = {
+                'vscode': 'VS Code',
+                'vscode-insiders': 'VS Code Insiders',
+                'cursor': 'Cursor',
+                'antigravity': 'Antigravity',
+                'vscodium': 'VSCodium',
+                'windsurf': 'Windsurf'
+            };
+            return names[scheme] || scheme.charAt(0).toUpperCase() + scheme.slice(1);
+        }
+
+        const editorScheme = getEditorScheme();
+        const editorName = getEditorDisplayName(editorScheme);
+
+        // Update editor name placeholders
+        document.getElementById('subtitle-editor-name').textContent = editorName;
+        document.getElementById('success-editor-name').textContent = editorName;
+        document.getElementById('link-editor-name').textContent = editorName;
+
+        // Update page title
+        document.title = `Sign In to ${editorName} | CodeA11y Portal`;
+
+        function redirectToVSCode(token, user) {
+            const params = new URLSearchParams({
+                token: token,
+                email: user.email
+            });
+
+            // Extension ID = codea11y.wcag-analyzer
+            const editorUri = `${editorScheme}://codea11y.wcag-analyzer/auth-callback?${params.toString()}`;
+
+            manualRedirectLink.href = editorUri;
+
+            loginView.classList.add('hidden');
+            successView.classList.remove('hidden');
+
+            window.location.href = editorUri;
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            alert.classList.add('hidden');
+            alert.style.display = 'none';
+            setLoading(true);
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            try {
+                const res = await fetch('api/auth/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await res.json();
+
+                if (!res.ok) {
+                    throw new Error(data.error || 'Sign in failed');
+                }
+
+                redirectToVSCode(data.token, data.user);
+
+            } catch (error) {
+                showAlert(error.message, 'error');
+                setLoading(false);
+            }
+        });
+    </script>
+</body>
+
+</html>

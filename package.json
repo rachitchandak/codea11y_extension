@@ -14,6 +14,16 @@
   "activationEvents": [],
   "main": "./dist/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Codea11y",
+      "properties": {
+        "codea11y.serverBaseUrl": {
+          "type": "string",
+          "default": "http://localhost:3000/codea11y",
+          "description": "Base URL of the authenticated Codea11y server used for login and audit APIs."
+        }
+      }
+    },
     "viewsContainers": {
       "activitybar": [
         {

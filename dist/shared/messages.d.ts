@@ -133,7 +133,32 @@ export interface ChatSession {
     updatedAt: string;
     messageCount: number;
 }
+export interface AuthUser {
+    id: number;
+    email: string;
+    isAdmin: boolean;
+    isApproved?: boolean;
+}
+export interface AuthStatePayload {
+    status: "checking" | "authenticating" | "authenticated" | "unauthenticated";
+    serverBaseUrl: string;
+    user?: AuthUser;
+    error?: string;
+    notice?: string;
+}
 export type WebviewToExtensionMessage = {
+    type: "GET_AUTH_STATE";
+    payload?: undefined;
+} | {
+    type: "LOGIN_REQUEST";
+    payload: {
+        email: string;
+        password: string;
+    };
+} | {
+    type: "LOGOUT";
+    payload?: undefined;
+} | {
     type: "SEND_QUERY";
     payload: {
         query: string;
@@ -188,6 +213,9 @@ export interface ValidationResult {
     }>;
 }
 export type ExtensionToWebviewMessage = {
+    type: "AUTH_STATE";
+    payload: AuthStatePayload;
+} | {
     type: "RESET_REPORT";
     payload?: undefined;
 } | {

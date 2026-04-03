@@ -7,7 +7,9 @@ import {
 } from "./providers/ReportPanelProvider";
 import { buildFileTree, FileTreeNode } from "./ProjectScanner";
 import {
+  configureServerConnection,
   startServer,
+  startAgentAuditStream,
   waitForServer,
   ignoreIssueOnServer,
   killServer,
@@ -15,6 +17,7 @@ import {
   retrieveOrInitiateReport,
   ServerNeedsUrlError,
 } from "./serverClient";
+import { AuthSessionManager } from "./authSession";
 import type {
   AuditResult,
   ChatMessage,
@@ -224,6 +227,13 @@ function buildProjectReportPayload(args: {
  *  activate()                                                         *
  * ================================================================== */
 export async function activate(context: vscode.ExtensionContext) {
+  const authSession = new AuthSessionManager(context);
+  await authSession.initialize();
+
+  configureServerConnection({
+    baseUrl: authSession.getState().serverBaseUrl,
+  });
+
   // ── Start proxy server ────────────────────────────────────────────
   try {
     await startServer(context.extensionPath);
@@ -236,6 +246,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
   // ── Sidebar Chat View ─────────────────────────────────────────────
   const sidebarProvider = new SidebarProvider(context.extensionUri);
+  sidebarProvider.getAuthState = () => authSession.getState();
   context.subscriptions.push(
     vscode.window.registerWebviewViewProvider(
       SidebarProvider.viewType,
@@ -243,8 +254,41 @@ export async function activate(context: vscode.ExtensionContext) {
     )
   );
 
+  function syncAuthState(): void {
+    sidebarProvider.postMessage({
+      type: "AUTH_STATE",
+      payload: authSession.getState(),
+    });
+  }
+
+  async function ensureAuthenticated(): Promise<boolean> {
+    if (authSession.isAuthenticated()) {
+      return true;
+    }
+
+    syncAuthState();
+    vscode.window.showWarningMessage(
+      "Codea11y: Sign in from the chat sidebar before using the extension."
+    );
+    return false;
+  }
+
+  sidebarProvider.onLoginRequest = async (email: string, password: string) => {
+    await authSession.login(email, password);
+    syncAuthState();
+  };
+
+  sidebarProvider.onLogout = async () => {
+    await authSession.logout();
+    syncAuthState();
+  };
+
   // ── Run agent-driven audit (MainAgent NDJSON stream) ──────────────
   async function runAgentAudit(query: string, projectUrl?: string) {
+    if (!(await ensureAuthenticated())) {
+      return;
+    }
+
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
       vscode.window.showErrorMessage("Codea11y: No workspace folder open.");
@@ -261,15 +305,11 @@ export async function activate(context: vscode.ExtensionContext) {
     try {
       const fileTree = buildFileTree(rootPath);
 
-      const response = await fetch("http://localhost:7544/agent/start", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
+      const response = await startAgentAuditStream({
           userQuery: query,
           fileTree,
           rootPath,
           projectUrl,
-        }),
       });
 
       if (!response.ok || !response.body) {
@@ -319,6 +359,10 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 
   async function openActiveFileReport(projectUrl?: string): Promise<void> {
+    if (!(await ensureAuthenticated())) {
+      return;
+    }
+
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     const activeFilePath = vscode.window.activeTextEditor?.document.uri.fsPath;
 
@@ -374,6 +418,10 @@ export async function activate(context: vscode.ExtensionContext) {
   }
 
   async function openProjectReports(): Promise<void> {
+    if (!(await ensureAuthenticated())) {
+      return;
+    }
+
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
       vscode.window.showErrorMessage("Codea11y: No workspace folder open.");
@@ -437,6 +485,10 @@ export async function activate(context: vscode.ExtensionContext) {
   // ── Wire IGNORE_ISSUE → server ───────────────────────────────────
   onIgnoreIssue(async (issueId: string) => {
     try {
+      if (!(await ensureAuthenticated())) {
+        return;
+      }
+
       await ignoreIssueOnServer(issueId);
       vscode.window.showInformationMessage(
         `Codea11y: Issue ${issueId} marked as ignored.`
@@ -464,10 +516,12 @@ export async function activate(context: vscode.ExtensionContext) {
           "e.g., Audit all React components for WCAG AA compliance",
       });
       if (query) {
-        runAgentAudit(query);
+        void runAgentAudit(query);
       }
     })
   );
+
+  syncAuthState();
 
   // ── Dispose server on deactivation ────────────────────────────────
   context.subscriptions.push({

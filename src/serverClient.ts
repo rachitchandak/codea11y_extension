@@ -4,6 +4,9 @@ import type { AuditResult, FileReportReadyPayload } from "./shared/messages";
 
 type RawFileReportPayload = Omit<FileReportReadyPayload, "kind">;
 
+const LEGACY_SERVER_BASE_URL = "http://localhost:7544";
+const DEFAULT_REMOTE_BASE_URL = "http://localhost:3000/codea11y";
+
 export interface ProjectAuditSnapshotFile {
   filePath: string;
   fileHash: string | null;
@@ -30,6 +33,32 @@ export class ServerNeedsUrlError extends Error {
 }
 
 let serverProcess: cp.ChildProcess | undefined;
+let remoteServerBaseUrl = DEFAULT_REMOTE_BASE_URL;
+let authToken: string | undefined;
+
+function normalizeBaseUrl(value: string): string {
+  return value.replace(/\/+$/, "");
+}
+
+function buildRemoteUrl(pathname: string): string {
+  return `${normalizeBaseUrl(remoteServerBaseUrl)}${pathname}`;
+}
+
+function buildRequestHeaders(headers?: HeadersInit): Headers {
+  const requestHeaders = new Headers(headers || {});
+  if (authToken) {
+    requestHeaders.set("Authorization", `Bearer ${authToken}`);
+  }
+  return requestHeaders;
+}
+
+export function configureServerConnection(args: {
+  baseUrl?: string;
+  authToken?: string;
+}): void {
+  remoteServerBaseUrl = normalizeBaseUrl(args.baseUrl || DEFAULT_REMOTE_BASE_URL);
+  authToken = args.authToken;
+}
 
 export function startServer(extensionPath: string): Promise<void> {
   const serverScript = path.join(extensionPath, "dist", "server", "index.js");
@@ -75,7 +104,7 @@ export function startServer(extensionPath: string): Promise<void> {
 export async function waitForServer(retries = 20, delay = 500): Promise<void> {
   for (let i = 0; i < retries; i++) {
     try {
-      const res = await fetch("http://localhost:7544/health");
+      const res = await fetch(`${LEGACY_SERVER_BASE_URL}/health`);
       if (res.ok) return;
     } catch {
       // not ready yet
@@ -86,9 +115,9 @@ export async function waitForServer(retries = 20, delay = 500): Promise<void> {
 }
 
 export async function ignoreIssueOnServer(issueId: string): Promise<void> {
-  const res = await fetch("http://localhost:7544/ignore-issue", {
+  const res = await fetch(buildRemoteUrl("/api/audit/ignore-issue"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ issueId }),
   });
 
@@ -103,9 +132,9 @@ export async function retrieveOrInitiateReport(args: {
   rootPath: string;
   projectUrl?: string;
 }): Promise<FileReportReadyPayload> {
-  const res = await fetch("http://localhost:7544/reports/open", {
+  const res = await fetch(buildRemoteUrl("/api/audit/reports/open"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify(args),
   });
 
@@ -136,7 +165,12 @@ export async function retrieveOrInitiateReport(args: {
 }
 
 export async function getReportById(reportId: string): Promise<FileReportReadyPayload> {
-  const res = await fetch(`http://localhost:7544/reports/${encodeURIComponent(reportId)}`);
+  const res = await fetch(
+    buildRemoteUrl(`/api/audit/reports/${encodeURIComponent(reportId)}`),
+    {
+      headers: buildRequestHeaders(),
+    }
+  );
   const body = (await res.json().catch(() => ({}))) as {
     report?: RawFileReportPayload;
     error?: string;
@@ -155,9 +189,9 @@ export async function getReportById(reportId: string): Promise<FileReportReadyPa
 export async function getProjectAuditSnapshot(
   rootPath: string
 ): Promise<ProjectAuditSnapshotPayload> {
-  const res = await fetch("http://localhost:7544/reports/project-snapshot", {
+  const res = await fetch(buildRemoteUrl("/api/audit/reports/project-snapshot"), {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildRequestHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ rootPath }),
   });
 
@@ -179,6 +213,19 @@ export async function getProjectAuditSnapshot(
     createdAt: body.createdAt || new Date().toISOString(),
     files: body.files || [],
   };
+}
+
+export async function startAgentAuditStream(args: {
+  userQuery: string;
+  fileTree: unknown;
+  rootPath: string;
+  projectUrl?: string;
+}): Promise<Response> {
+  return fetch(buildRemoteUrl("/api/audit/agent/start"), {
+    method: "POST",
+    headers: buildRequestHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify(args),
+  });
 }
 
 export function killServer(): void {
