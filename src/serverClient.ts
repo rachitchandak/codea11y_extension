@@ -1,4 +1,3 @@
-import * as cp from "child_process";
 import * as path from "path";
 import type { AuditResult, FileReportReadyPayload } from "./shared/messages";
 
@@ -29,50 +28,7 @@ export class ServerNeedsUrlError extends Error {
   }
 }
 
-let serverProcess: cp.ChildProcess | undefined;
-
-export function startServer(extensionPath: string): Promise<void> {
-  const serverScript = path.join(extensionPath, "dist", "server", "index.js");
-
-  return new Promise((resolve, reject) => {
-    serverProcess = cp.spawn("node", [serverScript], {
-      cwd: extensionPath,
-      env: {
-        ...process.env,
-        CODEA11Y_PORT: "7544",
-        CODEA11Y_ROOT: extensionPath,
-        CODEA11Y_DB_DIR: extensionPath,
-      },
-      stdio: ["pipe", "pipe", "pipe"],
-    });
-
-    serverProcess.stdout?.on("data", (data: Buffer) => {
-      const msg = data.toString();
-      console.log("[codea11y-server]", msg);
-      if (msg.includes("running on")) {
-        resolve();
-      }
-    });
-
-    serverProcess.stderr?.on("data", (data: Buffer) => {
-      console.error("[codea11y-server]", data.toString());
-    });
-
-    serverProcess.on("error", (err) => {
-      reject(new Error(`Failed to start server: ${err.message}`));
-    });
-
-    serverProcess.on("exit", (code) => {
-      if (code !== null && code !== 0) {
-        reject(new Error(`Server exited with code ${code}`));
-      }
-    });
-
-    setTimeout(() => reject(new Error("Server startup timeout")), 15_000);
-  });
-}
-
-export async function waitForServer(retries = 20, delay = 500): Promise<void> {
+export async function waitForServer(retries = 10, delay = 1000): Promise<void> {
   for (let i = 0; i < retries; i++) {
     try {
       const res = await fetch("http://localhost:7544/health");
@@ -82,7 +38,10 @@ export async function waitForServer(retries = 20, delay = 500): Promise<void> {
     }
     await new Promise((r) => setTimeout(r, delay));
   }
-  throw new Error("Server did not become ready in time");
+  throw new Error(
+    "Could not connect to Codea11y server on port 7544. " +
+    "Please start the server manually before using the extension."
+  );
 }
 
 export async function ignoreIssueOnServer(issueId: string): Promise<void> {
@@ -181,7 +140,4 @@ export async function getProjectAuditSnapshot(
   };
 }
 
-export function killServer(): void {
-  serverProcess?.kill();
-  serverProcess = undefined;
-}
+

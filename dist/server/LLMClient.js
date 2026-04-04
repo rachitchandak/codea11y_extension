@@ -1,17 +1,40 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LLMClient = void 0;
+const db_1 = require("./db");
+function truncate(text, maxLength) {
+    if (text.length <= maxLength)
+        return text;
+    return text.slice(0, maxLength) + "…";
+}
 /* ------------------------------------------------------------------ *
  *  LLMClient                                                          *
  *  Manages conversation "threads" as in-memory message arrays so      *
  *  that file context is preserved (cached) across sequential          *
  *  guideline checks on the same file.                                 *
+ *                                                                     *
+ *  The actual LLM call is delegated to an LLMProvider adapter.        *
  * ------------------------------------------------------------------ */
 class LLMClient {
-    constructor(client, deployment) {
-        this.client = client;
-        this.deployment = deployment;
+    constructor(provider) {
         this.threads = new Map();
+        this._sessionId = null;
+        this._phase = null;
+        this._provider = provider;
+    }
+    /* ── Hot-swap the underlying provider ──────────────────────────── */
+    setProvider(provider) {
+        this._provider = provider;
+    }
+    get providerModel() {
+        return this._provider.displayModel;
+    }
+    /* ── Session tracking for logging ──────────────────────────────── */
+    setSession(sessionId) {
+        this._sessionId = sessionId;
+    }
+    setPhase(phase) {
+        this._phase = phase;
     }
     /* ── Create a new conversation thread with a system prompt ──────── */
     createThread(threadId, systemPrompt) {
@@ -24,15 +47,34 @@ class LLMClient {
             throw new Error(`Thread "${threadId}" does not exist.`);
         }
         history.push({ role: "user", content });
-        const completion = await this.client.chat.completions.create({
-            model: this.deployment,
-            messages: history,
-            ...(opts?.json
-                ? { response_format: { type: "json_object" } }
-                : {}),
-        });
-        const reply = completion.choices[0]?.message?.content ?? "";
+        const startMs = Date.now();
+        const result = await this._provider.chat(history, opts);
+        const durationMs = Date.now() - startMs;
+        const reply = result.content;
         history.push({ role: "assistant", content: reply });
+        // Log the API call
+        const systemMsg = history.find((m) => m.role === "system");
+        try {
+            (0, db_1.insertLlmApiCall)({
+                sessionId: this._sessionId,
+                threadId,
+                phase: this._phase,
+                model: this._provider.displayModel,
+                systemPromptPreview: systemMsg ? truncate(systemMsg.content, 200) : null,
+                userPromptPreview: truncate(content, 300),
+                responsePreview: truncate(reply, 300),
+                fullUserPrompt: content,
+                fullResponse: reply,
+                promptTokens: result.usage.promptTokens,
+                completionTokens: result.usage.completionTokens,
+                totalTokens: result.usage.totalTokens,
+                durationMs,
+                isJsonMode: opts?.json === true,
+            });
+        }
+        catch (logErr) {
+            console.error("[LLMClient] Failed to log API call:", logErr);
+        }
         return reply;
     }
     /* ── Tear down a thread to free memory ─────────────────────────── */

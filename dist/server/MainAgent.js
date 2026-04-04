@@ -225,16 +225,20 @@ class MainAgent extends events_1.EventEmitter {
     async run(params) {
         try {
             this.state = "intent";
+            this.llm.setPhase("intent");
             const shouldAudit = await this.phaseIntent(params);
             if (!shouldAudit) {
                 this.state = "done";
                 return;
             }
             this.state = "runtime";
+            this.llm.setPhase("runtime");
             await this.phaseRuntime(params);
             this.state = "audit";
+            this.llm.setPhase("audit");
             await this.phaseAudit(params);
             this.state = "validate";
+            this.llm.setPhase("validate");
             await this.phaseValidate(params);
             this.state = "done";
             this.pushWorkflowState({

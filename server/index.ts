@@ -2,48 +2,33 @@ import express from "express";
 import cors from "cors";
 import * as fs from "fs";
 import * as path from "path";
-import { AzureOpenAI } from "openai";
 import {
   initDatabase,
   ignoreIssue as dbIgnoreIssue,
   getProjectAuditSnapshot,
+  createSession,
+  endSession,
+  getActiveLlmProvider,
+  insertLlmProvider,
+  getAllLlmProviders,
 } from "./db";
 import { LLMClient } from "./LLMClient";
 import { ToolWrapper } from "./ToolWrapper";
 import { MainAgent } from "./MainAgent";
 import type { AgentEvent } from "./MainAgent";
 import { ReportService, ReportServiceNeedsUrlError } from "./ReportService";
+import { mountAdminPanel } from "./adminPanel";
+import {
+  createProvider,
+  type ProviderType,
+  type LLMProvider,
+} from "./providers";
 
 /* ------------------------------------------------------------------ *
- *  Parse Azure OpenAI credentials from API.txt                       *
+ *  Paths                                                              *
  * ------------------------------------------------------------------ */
 const rootDir =
   process.env.CODEA11Y_ROOT || path.join(__dirname, "..", "..");
-const apiTxtPath = path.join(rootDir, "API.txt");
-const apiTxt = fs.readFileSync(apiTxtPath, "utf-8");
-
-function extractValue(text: string, key: string): string {
-  const match = text.match(new RegExp(`${key}\\s*=\\s*"([^"]+)"`));
-  if (!match) {
-    throw new Error(`Could not find ${key} in API.txt`);
-  }
-  return match[1];
-}
-
-const API_KEY = extractValue(apiTxt, "API_KEY");
-const RESOURCE = extractValue(apiTxt, "RESOURCE");
-const DEPLOYMENT = extractValue(apiTxt, "DEPLOYMENT");
-const API_VERSION = extractValue(apiTxt, "API_VERSION");
-
-/* ------------------------------------------------------------------ *
- *  Azure OpenAI client                                                *
- * ------------------------------------------------------------------ */
-const openai = new AzureOpenAI({
-  apiKey: API_KEY,
-  endpoint: `https://${RESOURCE}.openai.azure.com`,
-  apiVersion: API_VERSION,
-  deployment: DEPLOYMENT,
-});
 
 /* ------------------------------------------------------------------ *
  *  Express application                                                *
@@ -51,6 +36,7 @@ const openai = new AzureOpenAI({
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: "10mb" }));
+app.use(express.urlencoded({ extended: true }));
 
 const PORT = Number(process.env.CODEA11Y_PORT) || 7544;
 
@@ -61,11 +47,110 @@ const dbDir = process.env.CODEA11Y_DB_DIR || rootDir;
 initDatabase(dbDir);
 
 /* ------------------------------------------------------------------ *
+ *  Seed default provider from API.txt (one-time, if no providers yet) *
+ * ------------------------------------------------------------------ */
+function seedDefaultProvider(): void {
+  const existing = getAllLlmProviders();
+  if (existing.length > 0) return;
+
+  const apiTxtPath = path.join(rootDir, "API.txt");
+  if (!fs.existsSync(apiTxtPath)) return;
+
+  try {
+    const apiTxt = fs.readFileSync(apiTxtPath, "utf-8");
+    const extract = (key: string): string => {
+      const m = apiTxt.match(new RegExp(`${key}\\s*=\\s*"([^"]+)"`));
+      return m ? m[1] : "";
+    };
+
+    const apiKey = extract("API_KEY");
+    const resource = extract("RESOURCE");
+    const deployment = extract("DEPLOYMENT");
+    const apiVersion = extract("API_VERSION");
+
+    if (apiKey && resource && deployment && apiVersion) {
+      insertLlmProvider({
+        name: "Azure OpenAI (from API.txt)",
+        providerType: "azure-openai",
+        configJson: JSON.stringify({ apiKey, resource, deployment, apiVersion }),
+        isActive: true,
+      });
+      console.log("[init] Seeded default Azure OpenAI provider from API.txt");
+    }
+  } catch (err) {
+    console.warn("[init] Could not seed provider from API.txt:", err);
+  }
+}
+seedDefaultProvider();
+
+/* ------------------------------------------------------------------ *
+ *  Seed Groq provider (llama-3.3-70b-versatile)                      *
+ * ------------------------------------------------------------------ */
+(function seedGroqProvider(): void {
+  const all = getAllLlmProviders();
+  const alreadyExists = all.some(
+    (p) => p.providerType === "groq" && p.name === "Groq Llama 3.3 70B"
+  );
+  if (alreadyExists) return;
+
+  // Deactivate any existing providers so this one becomes active
+  insertLlmProvider({
+    name: "Groq Llama 3.3 70B",
+    providerType: "groq",
+    configJson: JSON.stringify({
+      apiKey: "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",
+      model: "llama-3.3-70b-versatile",
+    }),
+    isActive: true,
+  });
+  console.log("[init] Seeded Groq provider (llama-3.3-70b-versatile)");
+})();
+
+/* ------------------------------------------------------------------ *
+ *  Build provider from DB or fail with a clear message                *
+ * ------------------------------------------------------------------ */
+function buildActiveProvider(): LLMProvider {
+  const row = getActiveLlmProvider();
+  if (!row) {
+    throw new Error(
+      "No active LLM provider configured. Go to /admin/providers to set one up."
+    );
+  }
+  const config = JSON.parse(row.configJson) as Record<string, string>;
+  return createProvider(row.providerType as ProviderType, config);
+}
+
+let activeProvider: LLMProvider;
+try {
+  activeProvider = buildActiveProvider();
+} catch (err: any) {
+  console.warn("[init]", err.message, "— server will start but LLM calls will fail until a provider is configured.");
+  // Create a stub that throws so the server can still start and serve the admin panel
+  activeProvider = {
+    displayModel: "(none)",
+    async chat() {
+      throw new Error("No active LLM provider configured. Go to /admin/providers to set one up.");
+    },
+  };
+}
+
+/* ------------------------------------------------------------------ *
  *  Agent infrastructure                                               *
  * ------------------------------------------------------------------ */
-const llmClient = new LLMClient(openai, DEPLOYMENT);
+const llmClient = new LLMClient(activeProvider);
 const toolWrapper = new ToolWrapper(path.join(rootDir, "wcag-mapper"));
 const reportService = new ReportService(llmClient, toolWrapper);
+
+/** Called by admin panel when the active provider changes at runtime. */
+export function reloadActiveProvider(): void {
+  try {
+    const provider = buildActiveProvider();
+    llmClient.setProvider(provider);
+    console.log(`[providers] Switched to: ${provider.displayModel}`);
+  } catch (err: any) {
+    console.error("[providers] Failed to reload provider:", err.message);
+  }
+}
 
 /* ------------------------------------------------------------------ *
  *  GET /health                                                        *
@@ -87,13 +172,26 @@ app.post("/reports/open", async (req, res) => {
       return;
     }
 
-    const report = await reportService.retrieveOrInitiateAudit({
-      filePath,
-      rootPath,
-      projectUrl,
-    });
+    const sessionId = createSession(`Report: ${filePath}`, rootPath);
+    llmClient.setSession(sessionId);
+    llmClient.setPhase("report");
 
-    res.json({ report });
+    try {
+      const report = await reportService.retrieveOrInitiateAudit({
+        filePath,
+        rootPath,
+        projectUrl,
+      });
+
+      endSession(sessionId, "completed");
+      res.json({ report });
+    } catch (err) {
+      endSession(sessionId, "error");
+      throw err;
+    } finally {
+      llmClient.setSession(null);
+      llmClient.setPhase(null);
+    }
   } catch (err) {
     if (err instanceof ReportServiceNeedsUrlError) {
       res.status(409).json({ error: err.message, needsUrl: true });
@@ -173,6 +271,10 @@ app.post("/agent/start", async (req, res) => {
     return;
   }
 
+  // Create a session for this audit run
+  const sessionId = createSession(userQuery, rootPath);
+  llmClient.setSession(sessionId);
+
   // Stream NDJSON events back to the client
   res.writeHead(200, {
     "Content-Type": "application/x-ndjson",
@@ -189,7 +291,17 @@ app.post("/agent/start", async (req, res) => {
     }
   });
 
-  await agent.run({ userQuery, fileTree, rootPath, projectUrl, forceRuntime });
+  try {
+    await agent.run({ userQuery, fileTree, rootPath, projectUrl, forceRuntime });
+    endSession(sessionId, "completed");
+  } catch (err) {
+    endSession(sessionId, "error");
+    throw err;
+  } finally {
+    llmClient.setSession(null);
+    llmClient.setPhase(null);
+  }
+
   res.end();
 });
 
@@ -213,6 +325,11 @@ app.post("/ignore-issue", (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+/* ------------------------------------------------------------------ *
+ *  Admin panel                                                        *
+ * ------------------------------------------------------------------ */
+mountAdminPanel(app, reloadActiveProvider);
 
 /* ------------------------------------------------------------------ *
  *  Start server                                                       *

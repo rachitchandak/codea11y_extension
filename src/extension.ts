@@ -7,10 +7,8 @@ import {
 } from "./providers/ReportPanelProvider";
 import { buildFileTree, FileTreeNode } from "./ProjectScanner";
 import {
-  startServer,
   waitForServer,
   ignoreIssueOnServer,
-  killServer,
   getProjectAuditSnapshot,
   retrieveOrInitiateReport,
   ServerNeedsUrlError,
@@ -224,13 +222,12 @@ function buildProjectReportPayload(args: {
  *  activate()                                                         *
  * ================================================================== */
 export async function activate(context: vscode.ExtensionContext) {
-  // ── Start proxy server ────────────────────────────────────────────
+  // ── Connect to standalone server ────────────────────────────────
   try {
-    await startServer(context.extensionPath);
     await waitForServer();
   } catch (err: any) {
     vscode.window.showErrorMessage(
-      `Codea11y: Failed to start server – ${err.message}`
+      `Codea11y: ${err.message}`
     );
   }
 
@@ -468,15 +465,8 @@ export async function activate(context: vscode.ExtensionContext) {
       }
     })
   );
-
-  // ── Dispose server on deactivation ────────────────────────────────
-  context.subscriptions.push({
-    dispose() {
-      killServer();
-    },
-  });
 }
 
 export function deactivate() {
-  killServer();
+  // Server is standalone — no cleanup needed
 }

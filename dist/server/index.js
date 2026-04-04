@@ -36,48 +36,29 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.reloadActiveProvider = reloadActiveProvider;
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
-const openai_1 = require("openai");
 const db_1 = require("./db");
 const LLMClient_1 = require("./LLMClient");
 const ToolWrapper_1 = require("./ToolWrapper");
 const MainAgent_1 = require("./MainAgent");
 const ReportService_1 = require("./ReportService");
+const adminPanel_1 = require("./adminPanel");
+const providers_1 = require("./providers");
 /* ------------------------------------------------------------------ *
- *  Parse Azure OpenAI credentials from API.txt                       *
+ *  Paths                                                              *
  * ------------------------------------------------------------------ */
 const rootDir = process.env.CODEA11Y_ROOT || path.join(__dirname, "..", "..");
-const apiTxtPath = path.join(rootDir, "API.txt");
-const apiTxt = fs.readFileSync(apiTxtPath, "utf-8");
-function extractValue(text, key) {
-    const match = text.match(new RegExp(`${key}\\s*=\\s*"([^"]+)"`));
-    if (!match) {
-        throw new Error(`Could not find ${key} in API.txt`);
-    }
-    return match[1];
-}
-const API_KEY = extractValue(apiTxt, "API_KEY");
-const RESOURCE = extractValue(apiTxt, "RESOURCE");
-const DEPLOYMENT = extractValue(apiTxt, "DEPLOYMENT");
-const API_VERSION = extractValue(apiTxt, "API_VERSION");
-/* ------------------------------------------------------------------ *
- *  Azure OpenAI client                                                *
- * ------------------------------------------------------------------ */
-const openai = new openai_1.AzureOpenAI({
-    apiKey: API_KEY,
-    endpoint: `https://${RESOURCE}.openai.azure.com`,
-    apiVersion: API_VERSION,
-    deployment: DEPLOYMENT,
-});
 /* ------------------------------------------------------------------ *
  *  Express application                                                *
  * ------------------------------------------------------------------ */
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)());
 app.use(express_1.default.json({ limit: "10mb" }));
+app.use(express_1.default.urlencoded({ extended: true }));
 const PORT = Number(process.env.CODEA11Y_PORT) || 7544;
 /* ------------------------------------------------------------------ *
  *  Initialize database                                                *
@@ -85,11 +66,102 @@ const PORT = Number(process.env.CODEA11Y_PORT) || 7544;
 const dbDir = process.env.CODEA11Y_DB_DIR || rootDir;
 (0, db_1.initDatabase)(dbDir);
 /* ------------------------------------------------------------------ *
+ *  Seed default provider from API.txt (one-time, if no providers yet) *
+ * ------------------------------------------------------------------ */
+function seedDefaultProvider() {
+    const existing = (0, db_1.getAllLlmProviders)();
+    if (existing.length > 0)
+        return;
+    const apiTxtPath = path.join(rootDir, "API.txt");
+    if (!fs.existsSync(apiTxtPath))
+        return;
+    try {
+        const apiTxt = fs.readFileSync(apiTxtPath, "utf-8");
+        const extract = (key) => {
+            const m = apiTxt.match(new RegExp(`${key}\\s*=\\s*"([^"]+)"`));
+            return m ? m[1] : "";
+        };
+        const apiKey = extract("API_KEY");
+        const resource = extract("RESOURCE");
+        const deployment = extract("DEPLOYMENT");
+        const apiVersion = extract("API_VERSION");
+        if (apiKey && resource && deployment && apiVersion) {
+            (0, db_1.insertLlmProvider)({
+                name: "Azure OpenAI (from API.txt)",
+                providerType: "azure-openai",
+                configJson: JSON.stringify({ apiKey, resource, deployment, apiVersion }),
+                isActive: true,
+            });
+            console.log("[init] Seeded default Azure OpenAI provider from API.txt");
+        }
+    }
+    catch (err) {
+        console.warn("[init] Could not seed provider from API.txt:", err);
+    }
+}
+seedDefaultProvider();
+/* ------------------------------------------------------------------ *
+ *  Seed Groq provider (llama-3.3-70b-versatile)                      *
+ * ------------------------------------------------------------------ */
+(function seedGroqProvider() {
+    const all = (0, db_1.getAllLlmProviders)();
+    const alreadyExists = all.some((p) => p.providerType === "groq" && p.name === "Groq Llama 3.3 70B");
+    if (alreadyExists)
+        return;
+    // Deactivate any existing providers so this one becomes active
+    (0, db_1.insertLlmProvider)({
+        name: "Groq Llama 3.3 70B",
+        providerType: "groq",
+        configJson: JSON.stringify({
+            apiKey: "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",
+            model: "llama-3.3-70b-versatile",
+        }),
+        isActive: true,
+    });
+    console.log("[init] Seeded Groq provider (llama-3.3-70b-versatile)");
+})();
+/* ------------------------------------------------------------------ *
+ *  Build provider from DB or fail with a clear message                *
+ * ------------------------------------------------------------------ */
+function buildActiveProvider() {
+    const row = (0, db_1.getActiveLlmProvider)();
+    if (!row) {
+        throw new Error("No active LLM provider configured. Go to /admin/providers to set one up.");
+    }
+    const config = JSON.parse(row.configJson);
+    return (0, providers_1.createProvider)(row.providerType, config);
+}
+let activeProvider;
+try {
+    activeProvider = buildActiveProvider();
+}
+catch (err) {
+    console.warn("[init]", err.message, "— server will start but LLM calls will fail until a provider is configured.");
+    // Create a stub that throws so the server can still start and serve the admin panel
+    activeProvider = {
+        displayModel: "(none)",
+        async chat() {
+            throw new Error("No active LLM provider configured. Go to /admin/providers to set one up.");
+        },
+    };
+}
+/* ------------------------------------------------------------------ *
  *  Agent infrastructure                                               *
  * ------------------------------------------------------------------ */
-const llmClient = new LLMClient_1.LLMClient(openai, DEPLOYMENT);
+const llmClient = new LLMClient_1.LLMClient(activeProvider);
 const toolWrapper = new ToolWrapper_1.ToolWrapper(path.join(rootDir, "wcag-mapper"));
 const reportService = new ReportService_1.ReportService(llmClient, toolWrapper);
+/** Called by admin panel when the active provider changes at runtime. */
+function reloadActiveProvider() {
+    try {
+        const provider = buildActiveProvider();
+        llmClient.setProvider(provider);
+        console.log(`[providers] Switched to: ${provider.displayModel}`);
+    }
+    catch (err) {
+        console.error("[providers] Failed to reload provider:", err.message);
+    }
+}
 /* ------------------------------------------------------------------ *
  *  GET /health                                                        *
  * ------------------------------------------------------------------ */
@@ -107,12 +179,26 @@ app.post("/reports/open", async (req, res) => {
             res.status(400).json({ error: "Missing required fields: filePath, rootPath" });
             return;
         }
-        const report = await reportService.retrieveOrInitiateAudit({
-            filePath,
-            rootPath,
-            projectUrl,
-        });
-        res.json({ report });
+        const sessionId = (0, db_1.createSession)(`Report: ${filePath}`, rootPath);
+        llmClient.setSession(sessionId);
+        llmClient.setPhase("report");
+        try {
+            const report = await reportService.retrieveOrInitiateAudit({
+                filePath,
+                rootPath,
+                projectUrl,
+            });
+            (0, db_1.endSession)(sessionId, "completed");
+            res.json({ report });
+        }
+        catch (err) {
+            (0, db_1.endSession)(sessionId, "error");
+            throw err;
+        }
+        finally {
+            llmClient.setSession(null);
+            llmClient.setPhase(null);
+        }
     }
     catch (err) {
         if (err instanceof ReportService_1.ReportServiceNeedsUrlError) {
@@ -185,6 +271,9 @@ app.post("/agent/start", async (req, res) => {
             .json({ error: "Missing required fields: userQuery, fileTree, rootPath" });
         return;
     }
+    // Create a session for this audit run
+    const sessionId = (0, db_1.createSession)(userQuery, rootPath);
+    llmClient.setSession(sessionId);
     // Stream NDJSON events back to the client
     res.writeHead(200, {
         "Content-Type": "application/x-ndjson",
@@ -198,7 +287,18 @@ app.post("/agent/start", async (req, res) => {
             res.write(JSON.stringify(evt) + "\n");
         }
     });
-    await agent.run({ userQuery, fileTree, rootPath, projectUrl, forceRuntime });
+    try {
+        await agent.run({ userQuery, fileTree, rootPath, projectUrl, forceRuntime });
+        (0, db_1.endSession)(sessionId, "completed");
+    }
+    catch (err) {
+        (0, db_1.endSession)(sessionId, "error");
+        throw err;
+    }
+    finally {
+        llmClient.setSession(null);
+        llmClient.setPhase(null);
+    }
     res.end();
 });
 /* ------------------------------------------------------------------ *
@@ -220,6 +320,10 @@ app.post("/ignore-issue", (req, res) => {
         res.status(500).json({ error: err.message });
     }
 });
+/* ------------------------------------------------------------------ *
+ *  Admin panel                                                        *
+ * ------------------------------------------------------------------ */
+(0, adminPanel_1.mountAdminPanel)(app, reloadActiveProvider);
 /* ------------------------------------------------------------------ *
  *  Start server                                                       *
  * ------------------------------------------------------------------ */

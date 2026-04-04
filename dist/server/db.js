@@ -62,6 +62,20 @@ exports.insertStoredReport = insertStoredReport;
 exports.getLatestStoredReportByFilePath = getLatestStoredReportByFilePath;
 exports.getLatestStoredReportsByProjectRootPath = getLatestStoredReportsByProjectRootPath;
 exports.getStoredReportById = getStoredReportById;
+exports.createSession = createSession;
+exports.endSession = endSession;
+exports.getAllSessions = getAllSessions;
+exports.getSessionById = getSessionById;
+exports.insertLlmApiCall = insertLlmApiCall;
+exports.getLlmApiCallsBySession = getLlmApiCallsBySession;
+exports.getAllLlmApiCalls = getAllLlmApiCalls;
+exports.insertLlmProvider = insertLlmProvider;
+exports.updateLlmProvider = updateLlmProvider;
+exports.setActiveLlmProvider = setActiveLlmProvider;
+exports.deleteLlmProvider = deleteLlmProvider;
+exports.getAllLlmProviders = getAllLlmProviders;
+exports.getActiveLlmProvider = getActiveLlmProvider;
+exports.getLlmProviderById = getLlmProviderById;
 const better_sqlite3_1 = __importDefault(require("better-sqlite3"));
 const path = __importStar(require("path"));
 let db;
@@ -152,6 +166,46 @@ function initDatabase(dbDir) {
 
     CREATE INDEX IF NOT EXISTS idx_reports_file_path_created_at
       ON reports(file_path, created_at DESC, id DESC);
+
+    CREATE TABLE IF NOT EXISTS sessions (
+      id         INTEGER PRIMARY KEY AUTOINCREMENT,
+      query      TEXT NOT NULL,
+      root_path  TEXT,
+      started_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      ended_at   TEXT,
+      status     TEXT NOT NULL DEFAULT 'running'
+    );
+
+    CREATE TABLE IF NOT EXISTS llm_api_calls (
+      id                    INTEGER PRIMARY KEY AUTOINCREMENT,
+      session_id            INTEGER REFERENCES sessions(id) ON DELETE CASCADE,
+      thread_id             TEXT,
+      phase                 TEXT,
+      model                 TEXT NOT NULL,
+      system_prompt_preview TEXT,
+      user_prompt_preview   TEXT,
+      response_preview      TEXT,
+      full_user_prompt      TEXT,
+      full_response         TEXT,
+      prompt_tokens         INTEGER,
+      completion_tokens     INTEGER,
+      total_tokens          INTEGER,
+      duration_ms           INTEGER,
+      is_json_mode          INTEGER NOT NULL DEFAULT 0,
+      created_at            TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_llm_api_calls_session_id
+      ON llm_api_calls(session_id);
+
+    CREATE TABLE IF NOT EXISTS llm_providers (
+      id            INTEGER PRIMARY KEY AUTOINCREMENT,
+      name          TEXT NOT NULL,
+      provider_type TEXT NOT NULL,
+      config_json   TEXT NOT NULL,
+      is_active     INTEGER NOT NULL DEFAULT 0,
+      created_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
   `);
     // Migration: add `source` column for databases created before this change
     const cols = db
@@ -670,5 +724,152 @@ function syncIgnoredIssueInReports(auditResultId) {
             counts: nextCounts,
         }), row.id);
     }
+}
+/* ------------------------------------------------------------------ *
+ *  Session helpers                                                    *
+ * ------------------------------------------------------------------ */
+function createSession(query, rootPath) {
+    const row = getDb()
+        .prepare(`INSERT INTO sessions (query, root_path) VALUES (?, ?)
+       RETURNING id`)
+        .get(query, rootPath || null);
+    return row.id;
+}
+function endSession(sessionId, status = "completed") {
+    getDb()
+        .prepare("UPDATE sessions SET ended_at = CURRENT_TIMESTAMP, status = ? WHERE id = ?")
+        .run(status, sessionId);
+}
+function getAllSessions() {
+    return getDb()
+        .prepare(`SELECT s.id,
+              s.query,
+              s.root_path AS rootPath,
+              s.started_at AS startedAt,
+              s.ended_at AS endedAt,
+              s.status,
+              COUNT(l.id) AS callCount,
+              COALESCE(SUM(l.total_tokens), 0) AS totalTokens
+       FROM sessions s
+       LEFT JOIN llm_api_calls l ON l.session_id = s.id
+       GROUP BY s.id
+       ORDER BY s.started_at DESC`)
+        .all();
+}
+function getSessionById(sessionId) {
+    const row = getDb()
+        .prepare(`SELECT id, query, root_path AS rootPath, started_at AS startedAt, ended_at AS endedAt, status
+       FROM sessions WHERE id = ?`)
+        .get(sessionId);
+    return row || null;
+}
+/* ------------------------------------------------------------------ *
+ *  LLM API call log helpers                                           *
+ * ------------------------------------------------------------------ */
+function insertLlmApiCall(args) {
+    const row = getDb()
+        .prepare(`INSERT INTO llm_api_calls (
+         session_id, thread_id, phase, model,
+         system_prompt_preview, user_prompt_preview, response_preview,
+         full_user_prompt, full_response,
+         prompt_tokens, completion_tokens, total_tokens,
+         duration_ms, is_json_mode
+       )
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       RETURNING id`)
+        .get(args.sessionId, args.threadId, args.phase, args.model, args.systemPromptPreview, args.userPromptPreview, args.responsePreview, args.fullUserPrompt, args.fullResponse, args.promptTokens, args.completionTokens, args.totalTokens, args.durationMs, args.isJsonMode ? 1 : 0);
+    return row.id;
+}
+function getLlmApiCallsBySession(sessionId) {
+    return getDb()
+        .prepare(`SELECT id, thread_id AS threadId, phase, model,
+              system_prompt_preview AS systemPromptPreview,
+              user_prompt_preview AS userPromptPreview,
+              response_preview AS responsePreview,
+              full_user_prompt AS fullUserPrompt,
+              full_response AS fullResponse,
+              prompt_tokens AS promptTokens,
+              completion_tokens AS completionTokens,
+              total_tokens AS totalTokens,
+              duration_ms AS durationMs,
+              is_json_mode AS isJsonMode,
+              created_at AS createdAt
+       FROM llm_api_calls
+       WHERE session_id = ?
+       ORDER BY created_at ASC`)
+        .all(sessionId);
+}
+function getAllLlmApiCalls() {
+    return getDb()
+        .prepare(`SELECT id, session_id AS sessionId, thread_id AS threadId, phase, model,
+              prompt_tokens AS promptTokens,
+              completion_tokens AS completionTokens,
+              total_tokens AS totalTokens,
+              duration_ms AS durationMs,
+              created_at AS createdAt
+       FROM llm_api_calls
+       ORDER BY created_at DESC
+       LIMIT 500`)
+        .all();
+}
+function insertLlmProvider(args) {
+    if (args.isActive) {
+        getDb().prepare("UPDATE llm_providers SET is_active = 0").run();
+    }
+    const row = getDb()
+        .prepare(`INSERT INTO llm_providers (name, provider_type, config_json, is_active)
+       VALUES (?, ?, ?, ?)
+       RETURNING id`)
+        .get(args.name, args.providerType, args.configJson, args.isActive ? 1 : 0);
+    return row.id;
+}
+function updateLlmProvider(id, args) {
+    getDb()
+        .prepare(`UPDATE llm_providers SET name = ?, provider_type = ?, config_json = ? WHERE id = ?`)
+        .run(args.name, args.providerType, args.configJson, id);
+}
+function setActiveLlmProvider(id) {
+    const txn = getDb().transaction(() => {
+        getDb().prepare("UPDATE llm_providers SET is_active = 0").run();
+        getDb()
+            .prepare("UPDATE llm_providers SET is_active = 1 WHERE id = ?")
+            .run(id);
+    });
+    txn();
+}
+function deleteLlmProvider(id) {
+    getDb().prepare("DELETE FROM llm_providers WHERE id = ?").run(id);
+}
+function getAllLlmProviders() {
+    return getDb()
+        .prepare(`SELECT id, name, provider_type AS providerType, config_json AS configJson,
+              is_active AS isActive, created_at AS createdAt
+       FROM llm_providers
+       ORDER BY is_active DESC, created_at ASC`)
+        .all()
+        .map((row) => ({ ...row, isActive: row.isActive === 1 }));
+}
+function getActiveLlmProvider() {
+    const row = getDb()
+        .prepare(`SELECT id, name, provider_type AS providerType, config_json AS configJson,
+              is_active AS isActive, created_at AS createdAt
+       FROM llm_providers
+       WHERE is_active = 1
+       LIMIT 1`)
+        .get();
+    if (!row)
+        return null;
+    return { ...row, isActive: row.isActive === 1 };
+}
+function getLlmProviderById(id) {
+    const row = getDb()
+        .prepare(`SELECT id, name, provider_type AS providerType, config_json AS configJson,
+              is_active AS isActive, created_at AS createdAt
+       FROM llm_providers
+       WHERE id = ?`)
+        .get(id);
+    if (!row)
+        return null;
+    return { ...row, isActive: row.isActive === 1 };
 }
 //# sourceMappingURL=db.js.map

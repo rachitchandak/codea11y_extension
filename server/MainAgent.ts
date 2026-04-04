@@ -322,6 +322,7 @@ export class MainAgent extends EventEmitter {
   async run(params: AgentParams): Promise<void> {
     try {
       this.state = "intent";
+      this.llm.setPhase("intent");
       const shouldAudit = await this.phaseIntent(params);
 
       if (!shouldAudit) {
@@ -330,12 +331,15 @@ export class MainAgent extends EventEmitter {
       }
 
       this.state = "runtime";
+      this.llm.setPhase("runtime");
       await this.phaseRuntime(params);
 
       this.state = "audit";
+      this.llm.setPhase("audit");
       await this.phaseAudit(params);
 
       this.state = "validate";
+      this.llm.setPhase("validate");
       await this.phaseValidate(params);
 
       this.state = "done";
