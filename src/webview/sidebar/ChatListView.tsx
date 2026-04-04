@@ -12,10 +12,9 @@ import { getVsCodeApi, onExtensionMessage } from "../shared/vscodeApi";
 interface ChatListViewProps {
   onOpenChat: (chatId: string) => void;
   onNewChat: () => void;
-  onLogout: () => void;
 }
 
-export default function ChatListView({ onOpenChat, onNewChat, onLogout }: ChatListViewProps) {
+export default function ChatListView({ onOpenChat, onNewChat }: ChatListViewProps) {
   const vscodeApi = getVsCodeApi();
   const [chats, setChats] = useState<ChatSession[]>([]);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -81,25 +80,16 @@ export default function ChatListView({ onOpenChat, onNewChat, onLogout }: ChatLi
       {/* ── Header ──────────────────────────────────────────────── */}
       <div className="flex items-center justify-between px-3 py-2 border-b border-vscode-border">
         <h2 className="text-sm font-semibold m-0">Chat History</h2>
-        <div className="flex items-center gap-2">
-          <button
-            className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs font-medium
-                       bg-vscode-button-bg text-vscode-button-fg
-                       hover:bg-vscode-button-hover transition-colors"
-            onClick={onNewChat}
-            title="New Chat"
-          >
-            <span className="codicon codicon-add" />
-            New Chat
-          </button>
-          <button
-            className="rounded-sm border border-vscode-border px-2 py-1 text-xs font-medium opacity-75 transition-opacity hover:opacity-100"
-            onClick={onLogout}
-            title="Sign out"
-          >
-            Sign out
-          </button>
-        </div>
+        <button
+          className="flex items-center gap-1 px-2 py-1 rounded-sm text-xs font-medium
+                     bg-vscode-button-bg text-vscode-button-fg
+                     hover:bg-vscode-button-hover transition-colors"
+          onClick={onNewChat}
+          title="New Chat"
+        >
+          <span className="codicon codicon-add" />
+          New Chat
+        </button>
       </div>
 
       {/* ── Chat List ───────────────────────────────────────────── */}

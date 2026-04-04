@@ -1289,9 +1289,6 @@ video {
 .mt-2{
   margin-top: 0.5rem;
 }
-.mt-3{
-  margin-top: 0.75rem;
-}
 .mt-8{
   margin-top: 2rem;
 }
@@ -1476,12 +1473,6 @@ video {
 .border-none{
   border-style: none;
 }
-.border-\[var\(--vscode-inputValidation-errorBorder\)\]{
-  border-color: var(--vscode-inputValidation-errorBorder);
-}
-.border-\[var\(--vscode-inputValidation-warningBorder\)\]{
-  border-color: var(--vscode-inputValidation-warningBorder);
-}
 .border-transparent{
   border-color: transparent;
 }
@@ -1490,12 +1481,6 @@ video {
 }
 .border-vscode-input-border{
   border-color: var(--vscode-input-border);
-}
-.bg-\[var\(--vscode-inputValidation-errorBackground\)\]{
-  background-color: var(--vscode-inputValidation-errorBackground);
-}
-.bg-\[var\(--vscode-inputValidation-warningBackground\)\]{
-  background-color: var(--vscode-inputValidation-warningBackground);
 }
 .bg-transparent{
   background-color: transparent;
@@ -1699,9 +1684,6 @@ video {
 }
 .opacity-75{
   opacity: 0.75;
-}
-.opacity-80{
-  opacity: 0.8;
 }
 .opacity-85{
   opacity: 0.85;

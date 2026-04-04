@@ -162,26 +162,8 @@ export interface ChatSession {
   messageCount: number;
 }
 
-export interface AuthUser {
-  id: number;
-  email: string;
-  isAdmin: boolean;
-  isApproved?: boolean;
-}
-
-export interface AuthStatePayload {
-  status: "checking" | "authenticating" | "authenticated" | "unauthenticated";
-  serverBaseUrl: string;
-  user?: AuthUser;
-  error?: string;
-  notice?: string;
-}
-
 // ── Messages the UI can SEND to the extension ─────────────────────
 export type WebviewToExtensionMessage =
-  | { type: "GET_AUTH_STATE"; payload?: undefined }
-  | { type: "LOGIN_REQUEST"; payload: { email: string; password: string } }
-  | { type: "LOGOUT"; payload?: undefined }
   | { type: "SEND_QUERY"; payload: { query: string; chatId: string } }
   | { type: "IGNORE_ISSUE"; payload: { issueId: string } }
   | { type: "DOWNLOAD_REPORT"; payload: ReportDownloadPayload }
@@ -205,7 +187,6 @@ export interface ValidationResult {
 
 // ── Messages the extension can SEND to the UI ─────────────────────
 export type ExtensionToWebviewMessage =
-  | { type: "AUTH_STATE"; payload: AuthStatePayload }
   | { type: "RESET_REPORT"; payload?: undefined }
   | { type: "REPORT_READY"; payload: ReportReadyPayload }
   | { type: "UPDATE_WORKFLOW"; payload: WorkflowState | null }

@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 import type {
-  AuthStatePayload,
   WebviewToExtensionMessage,
   ExtensionToWebviewMessage,
 } from "../shared/messages";
@@ -16,9 +15,6 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
 
   /** Set by extension.ts to handle incoming audit queries. */
   public onSendQuery?: (query: string, chatId: string) => void;
-  public onLoginRequest?: (email: string, password: string) => Promise<void>;
-  public onLogout?: () => Promise<void>;
-  public getAuthState?: () => AuthStatePayload;
 
   constructor(private readonly _extensionUri: vscode.Uri) {}
 
@@ -43,65 +39,30 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     webviewView.webview.onDidReceiveMessage(
       (message: WebviewToExtensionMessage) => {
         switch (message.type) {
-          case "GET_AUTH_STATE":
-            this._postAuthState();
-            return;
-          case "LOGIN_REQUEST":
-            void this._handleLoginRequest(message.payload.email, message.payload.password);
-            return;
-          case "LOGOUT":
-            void this._handleLogout();
-            return;
           case "SEND_QUERY":
-            if (!this._isAuthenticated()) {
-              this._postAuthState();
-              return;
-            }
             this._handleSendQuery(message.payload.query, message.payload.chatId);
             return;
           case "RETRY_AUDIT":
             vscode.commands.executeCommand("codea11y.startAudit");
             return;
           case "GET_CHAT_LIST":
-            if (!this._isAuthenticated()) {
-              this._postAuthState();
-              return;
-            }
             this._handleGetChatList();
             return;
           case "CREATE_CHAT":
-            if (!this._isAuthenticated()) {
-              this._postAuthState();
-              return;
-            }
             this._handleCreateChat();
             return;
           case "DELETE_CHAT":
-            if (!this._isAuthenticated()) {
-              this._postAuthState();
-              return;
-            }
             this._handleDeleteChat(message.payload.chatId);
             return;
           case "OPEN_CHAT":
-            if (!this._isAuthenticated()) {
-              this._postAuthState();
-              return;
-            }
             this._handleOpenChat(message.payload.chatId);
             return;
           case "RENAME_CHAT":
-            if (!this._isAuthenticated()) {
-              this._postAuthState();
-              return;
-            }
             this._handleRenameChat(message.payload.chatId, message.payload.title);
             return;
         }
       }
     );
-
-    this._postAuthState();
   }
 
   /* ------------------------------------------------------------------ *
@@ -109,42 +70,6 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
    * ------------------------------------------------------------------ */
   public postMessage(message: ExtensionToWebviewMessage): void {
     this._view?.webview.postMessage(message);
-  }
-
-  private _postAuthState(): void {
-    if (!this.getAuthState) {
-      return;
-    }
-
-    this.postMessage({ type: "AUTH_STATE", payload: this.getAuthState() });
-  }
-
-  private _isAuthenticated(): boolean {
-    return this.getAuthState?.().status === "authenticated";
-  }
-
-  private async _handleLoginRequest(email: string, password: string): Promise<void> {
-    if (!this.onLoginRequest) {
-      this.postMessage({
-        type: "AUTH_STATE",
-        payload: {
-          status: "unauthenticated",
-          serverBaseUrl: this.getAuthState?.().serverBaseUrl || "",
-          error: "Login is not configured in the extension host.",
-        },
-      });
-      return;
-    }
-
-    await this.onLoginRequest(email, password);
-    this._postAuthState();
-  }
-
-  private async _handleLogout(): Promise<void> {
-    if (this.onLogout) {
-      await this.onLogout();
-    }
-    this._postAuthState();
   }
 
   /* ------------------------------------------------------------------ *
